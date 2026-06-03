@@ -54,7 +54,7 @@ def webhook():
                                 "action": {
                                     "type": "uri",
                                     "label": "🎡 開啟轉盤",
-                                    "uri": "https://你的網頁網址"
+                                    "uri": "https://cute-melomakarona-859d27.netlify.app""
                                 }
                             }
                         ]
