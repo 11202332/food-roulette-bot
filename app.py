@@ -5,10 +5,10 @@ import os
 
 app = Flask(__name__)
 
-# 🔑 LINE Token（一定要換）
+# 🔑 LINE Token（一定要換成你自己的）
 LINE_TOKEN = "請貼你的Channel Access Token"
 
-# 🍔 美食資料
+# 🍔 美食清單
 food_list = [
     "火鍋 🍲",
     "牛肉麵 🍜",
@@ -20,7 +20,7 @@ food_list = [
     "滷肉飯 🍚"
 ]
 
-# 🎡 Flex 卡片
+# 🎡 Flex卡片
 def flex_food(result):
     return {
         "type": "flex",
@@ -49,7 +49,7 @@ def flex_food(result):
         }
     }
 
-# 📩 回覆 function
+# 📩 reply function（已加 debug）
 def reply(reply_token, messages):
     url = "https://api.line.me/v2/bot/message/reply"
 
@@ -64,14 +64,17 @@ def reply(reply_token, messages):
     }
 
     r = requests.post(url, headers=headers, json=data)
-    print("REPLY STATUS:", r.status_code)
-    print("REPLY TEXT:", r.text)
+
+    print("==== REPLY DEBUG ====")
+    print("STATUS:", r.status_code)
+    print("TEXT:", r.text)
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
         body = request.get_json(force=True, silent=True)
+
         print("===== BODY =====")
         print(body)
 
@@ -79,7 +82,7 @@ def webhook():
             return "OK"
 
         events = body.get("events", [])
-        if len(events) == 0:
+        if not events:
             return "OK"
 
         event = events[0]
@@ -94,7 +97,7 @@ def webhook():
         if event.get("message"):
             msg = event["message"].get("text", "")
 
-        # 🟡 postback（圖文選單）
+        # 🟡 postback
         elif event.get("postback"):
             msg = event["postback"].get("data", "")
 
@@ -102,13 +105,9 @@ def webhook():
 
         msg = (msg or "").replace(" ", "").lower()
 
-        # 🎯 轉盤判斷（核心）
-        if msg and (
-            "轉盤" in msg or
-            "美食" in msg or
-            "food" in msg or
-            "roulette" in msg
-        ):
+        # 🎯 轉盤判斷
+        if ("轉盤" in msg or "美食" in msg or "food" in msg or "roulette" in msg):
+
             result = random.choice(food_list)
 
             reply(reply_token, [
