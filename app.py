@@ -6,6 +6,7 @@ import json
 app = Flask(__name__)
 
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
+
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
 headers = {
@@ -13,7 +14,6 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-# ⭐ 假會員資料（之後可以改成資料庫）
 members = []
 
 def reply(reply_token, messages):
@@ -21,7 +21,12 @@ def reply(reply_token, messages):
         "replyToken": reply_token,
         "messages": messages
     }
-    requests.post(LINE_API, headers=headers, data=json.dumps(payload))
+
+    res = requests.post(LINE_API, headers=headers, data=json.dumps(payload))
+
+    # 🔥 超重要 debug
+    print("LINE STATUS:", res.status_code)
+    print("LINE RESPONSE:", res.text)
 
 
 @app.route("/webhook", methods=["POST"])
@@ -37,10 +42,10 @@ def webhook():
         msg = event["message"]["text"]
         user_id = event["source"]["userId"]
 
-        # 🎡 美食轉盤
+        print("MSG:", msg)
+
         if msg == "美食轉盤":
 
-            # ✔ 會員
             if user_id in members:
 
                 reply(reply_token, [
@@ -50,15 +55,10 @@ def webhook():
                     },
                     {
                         "type": "text",
-                        "text": "👉 點這裡開啟轉盤："
-                    },
-                    {
-                        "type": "text",
                         "text": "https://cute-melomakarona-859d27.netlify.app"
                     }
                 ])
 
-            # ❌ 非會員
             else:
 
                 reply(reply_token, [
@@ -68,11 +68,7 @@ def webhook():
                     },
                     {
                         "type": "text",
-                        "text": "📌 請先完成註冊＋繳費"
-                    },
-                    {
-                        "type": "text",
-                        "text": "📝 表單：https://https://forms.gle/jYykimjWcX1rgYRW8"
+                        "text": "📝 表單：https://forms.gle/jYykimjWcX1rgYRW8"
                     }
                 ])
 
