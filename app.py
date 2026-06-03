@@ -80,5 +80,10 @@ def webhook():
     return "OK"
 
 
-if __name__ == "__main__":
-    app.run()
+import os
+
+if __name__ == '__main__':
+    # 讓程式去讀取 Render 提供的 Port，預設找不到就用 5000
+    port = int(os.environ.get("PORT", 5000))
+    # 這裡最重要：host 必須改成 '0.0.0.0'
+    app.run(host='0.0.0.0', port=port)
