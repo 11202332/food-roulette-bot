@@ -5,7 +5,7 @@ import json
 
 app = Flask(__name__)
 
-LINE_TOKEN = "你的Channel Access Token"
+LINE_TOKEN = "6V8gpFh118EDegFSi7PQnX98PUqOW8gGErX+FYj2XHmpHKxJ5oqG+Ohbrynn3FT6FjHtgdxziErSF6GzNDwMRsUlHWY8QAxw6WKQQ3/9uPEYoqSPlhOmcYYj9dg6FlvGJ3lTMps1K8vIbDSYEJ4m9gdB04t89/1O/w1cDnyilFU="
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
 headers = {
