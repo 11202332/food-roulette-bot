@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-# 🔑 LINE Channel Access Token（一定要換）
+# 🔑 請貼你的 LINE Channel Access Token
 LINE_TOKEN = "請貼你的Channel Access Token"
 
 # 🍔 美食清單
@@ -49,7 +49,7 @@ def flex_food(result):
         }
     }
 
-# 📩 LINE reply
+# 📩 LINE 回覆 API
 def reply(reply_token, messages):
     url = "https://api.line.me/v2/bot/message/reply"
 
@@ -65,8 +65,8 @@ def reply(reply_token, messages):
 
     r = requests.post(url, headers=headers, json=data)
 
-    print("reply status:", r.status_code)
-    print("reply response:", r.text)
+    print("REPLY STATUS:", r.status_code)
+    print("REPLY TEXT:", r.text)
 
 
 @app.route("/webhook", methods=["POST"])
@@ -84,22 +84,22 @@ def webhook():
 
         msg = ""
 
-        # 🟢 message
+        # 🟢 一般訊息
         if "message" in event:
             msg = event["message"].get("text", "")
             print("MESSAGE:", msg)
 
-        # 🟡 postback（圖文選單）
+        # 🟡 圖文選單 postback
         elif "postback" in event:
             msg = event["postback"].get("data", "")
             print("POSTBACK:", msg)
 
-        # 🧼 去空白
-        msg = msg.replace(" ", "") if msg else ""
+        # 🧼 清理字串（避免空格影響）
+        msg = (msg or "").replace(" ", "").lower()
 
         print("FINAL MSG:", msg)
 
-        # 🎯 轉盤判斷（重點）
+        # 🎯 轉盤判斷（核心）
         if msg and (
             "轉盤" in msg or
             "美食" in msg or
