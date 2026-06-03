@@ -7,7 +7,7 @@ app = Flask(__name__)
 # 🔑 換成你的 LINE Channel Access Token
 LINE_TOKEN = "請貼你的Token"
 
-# 🍔 美食清單
+# 🍔 美食資料
 food_list = [
     "火鍋 🍲",
     "牛肉麵 🍜",
@@ -19,7 +19,7 @@ food_list = [
     "滷肉飯 🍚"
 ]
 
-# 🎡 Flex 轉盤畫面
+# 🎡 Flex 轉盤卡片
 def flex_food(result):
     return {
         "type": "flex",
@@ -48,7 +48,7 @@ def flex_food(result):
         }
     }
 
-# 📩 回覆訊息 function
+# 📩 LINE 回覆 function
 def reply(reply_token, messages):
     url = "https://api.line.me/v2/bot/message/reply"
 
@@ -81,25 +81,33 @@ def webhook():
 
         msg = ""
 
-        # 🟢 message（一般訊息）
+        # 🟢 一般訊息
         if "message" in event:
             msg = event["message"].get("text", "")
-            print("MSG:", msg)
+            print("MESSAGE:", msg)
 
-        # 🟡 postback（圖文選單進階）
+        # 🟡 圖文選單 postback
         elif "postback" in event:
             msg = event["postback"].get("data", "")
             print("POSTBACK:", msg)
 
-        # 🎯 判斷轉盤
-        if msg and ("轉盤" in msg or "food" in msg):
+        # 🧠 去空白避免判斷失敗
+        msg = msg.replace(" ", "")
+
+        # 🎯 轉盤判斷（重點）
+        if msg and (
+            "轉盤" in msg or
+            "美食" in msg or
+            "food" in msg or
+            "roulette" in msg
+        ):
             result = random.choice(food_list)
 
             reply(reply_token, [
                 flex_food(result)
             ])
 
-        # 🧪 測試（避免你以為壞掉）
+        # 🧪 fallback（測試用）
         elif msg:
             reply(reply_token, [
                 {"type": "text", "text": f"收到：{msg}"}
