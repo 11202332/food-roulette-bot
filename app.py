@@ -1,11 +1,10 @@
-from flask import Flask, request, abort
+from flask import Flask, request
 import requests
 import os
 import json
 
 app = Flask(__name__)
 
-# 🔑 LINE Token（換成你的）
 LINE_TOKEN = "你的Channel Access Token"
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
@@ -14,7 +13,6 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-# 👉 發送回覆
 def reply(reply_token, messages):
     payload = {
         "replyToken": reply_token,
@@ -23,7 +21,6 @@ def reply(reply_token, messages):
     requests.post(LINE_API, headers=headers, data=json.dumps(payload))
 
 
-# 📩 webhook
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
@@ -36,7 +33,6 @@ def webhook():
         reply_token = event["replyToken"]
         msg = event["message"]["text"]
 
-        # 🎡 美食轉盤入口
         if msg == "美食轉盤":
 
             reply(reply_token, [
@@ -54,7 +50,7 @@ def webhook():
                                 "action": {
                                     "type": "uri",
                                     "label": "🎡 開啟轉盤",
-                                    "uri": "https://cute-melomakarona-859d27.netlify.app""
+                                    "uri": "https://cute-melomakarona-859d27.netlify.app"
                                 }
                             }
                         ]
@@ -62,7 +58,6 @@ def webhook():
                 }
             ])
 
-        # 🧪 測試
         else:
             reply(reply_token, [
                 {
@@ -78,7 +73,6 @@ def webhook():
         return "ERROR", 200
 
 
-# 🚀 啟動
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
