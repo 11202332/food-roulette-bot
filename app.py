@@ -4,19 +4,23 @@ import random
 
 app = Flask(__name__)
 
-LINE_TOKEN = "你的Channel Access Token"
+# 🔑 換成你的 LINE Channel Access Token
+LINE_TOKEN = "請貼你的Token"
 
+# 🍔 美食清單
 food_list = [
     "火鍋 🍲",
     "牛肉麵 🍜",
     "便當 🍱",
     "義大利麵 🍝",
     "早餐店 🥪",
-    "咖哩飯 🍛"
+    "咖哩飯 🍛",
+    "燒肉 🍖",
+    "滷肉飯 🍚"
 ]
 
 # 🎡 Flex 轉盤畫面
-def flex_message(result):
+def flex_food(result):
     return {
         "type": "flex",
         "altText": "美食轉盤結果",
@@ -26,14 +30,26 @@ def flex_message(result):
                 "type": "box",
                 "layout": "vertical",
                 "contents": [
-                    {"type": "text", "text": "🎡 今天吃這個！", "weight": "bold", "size": "xl"},
-                    {"type": "text", "text": result, "size": "xxl", "weight": "bold", "color": "#1DB446"}
+                    {
+                        "type": "text",
+                        "text": "🎡 今天吃這個！",
+                        "weight": "bold",
+                        "size": "xl"
+                    },
+                    {
+                        "type": "text",
+                        "text": result,
+                        "weight": "bold",
+                        "size": "xxl",
+                        "color": "#1DB446"
+                    }
                 ]
             }
         }
     }
 
-def reply(token, messages):
+# 📩 回覆訊息 function
+def reply(reply_token, messages):
     url = "https://api.line.me/v2/bot/message/reply"
 
     headers = {
@@ -42,48 +58,61 @@ def reply(token, messages):
     }
 
     data = {
-        "replyToken": token,
+        "replyToken": reply_token,
         "messages": messages
     }
 
-    requests.post(url, headers=headers, json=data)
+    r = requests.post(url, headers=headers, json=data)
+    print("reply status:", r.status_code)
+    print("reply response:", r.text)
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    body = request.json
-    event = body["events"][0]
+    try:
+        body = request.json
+        print("BODY:", body)
 
-    reply_token = event["replyToken"]
+        if not body or "events" not in body:
+            return "OK"
 
-    # 👉 點圖文選單（文字方式）
-    if "message" in event:
-        msg = event["message"]["text"]
+        event = body["events"][0]
+        reply_token = event.get("replyToken")
 
-        if "轉盤" in msg:
+        msg = ""
+
+        # 🟢 message（一般訊息）
+        if "message" in event:
+            msg = event["message"].get("text", "")
+            print("MSG:", msg)
+
+        # 🟡 postback（圖文選單進階）
+        elif "postback" in event:
+            msg = event["postback"].get("data", "")
+            print("POSTBACK:", msg)
+
+        # 🎯 判斷轉盤
+        if msg and ("轉盤" in msg or "food" in msg):
             result = random.choice(food_list)
 
             reply(reply_token, [
-                flex_message(result)
+                flex_food(result)
             ])
 
-    # 👉 如果你用 postback（進階）
-    elif "postback" in event:
-        data = event["postback"]["data"]
-
-        if data == "food_roulette":
-            result = random.choice(food_list)
-
+        # 🧪 測試（避免你以為壞掉）
+        elif msg:
             reply(reply_token, [
-                flex_message(result)
+                {"type": "text", "text": f"收到：{msg}"}
             ])
 
-    return "OK"
+        return "OK"
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return "OK"
 
 
-import os
-
-if __name__ == '__main__':
-    # 讓程式去讀取 Render 提供的 Port，預設找不到就用 5000
+if __name__ == "__main__":
+    import os
     port = int(os.environ.get("PORT", 5000))
-    # 這裡最重要：host 必須改成 '0.0.0.0'
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
