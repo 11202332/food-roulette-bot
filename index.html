@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>美食轉盤</title>
+<style>
+body{
+  text-align:center;
+  font-family: Arial;
+}
+
+canvas{
+  margin-top:30px;
+}
+
+button{
+  padding:10px 20px;
+  font-size:18px;
+  margin-top:20px;
+}
+
+#result{
+  margin-top:20px;
+  font-size:20px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎡 美食轉盤</h2>
+
+<canvas id="wheel" width="300" height="300"></canvas>
+
+<br>
+
+<button onclick="spin()">開始轉！</button>
+
+<div id="result"></div>
+
+<script>
+
+const foods = [
+"阿耀臭豆腐","津之芳","太極鰲車輪餅","油庫口",
+"致理飯糰","韓鼓","鄉親小吃","小時。候",
+"FlagPasta","吉飽早餐","榮次郎燒肉","is pasta",
+"逸麵麵鍋燒專賣店","吉野烤肉飯","一京咖哩","吳二麻辣鴨血"
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+
+const center = 150;
+const radius = 150;
+const angle = (2 * Math.PI) / foods.length;
+
+// 🎡 畫轉盤
+function drawWheel(){
+  for(let i=0;i<foods.length;i++){
+    let start = i * angle;
+
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.fillStyle = i%2==0 ? "#ffd6a5" : "#bde0fe";
+
+    ctx.arc(center, center, radius, start, start + angle);
+    ctx.fill();
+
+    // 文字
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(start + angle/2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#000";
+    ctx.font = "12px Arial";
+    ctx.fillText(foods[i], radius - 10, 5);
+    ctx.restore();
+  }
+}
+
+drawWheel();
+
+// 🎯 轉動
+let rotation = 0;
+
+function spin(){
+
+  let index = Math.floor(Math.random() * foods.length);
+
+  rotation += 360 * 5 + index * (360 / foods.length);
+
+  canvas.style.transition = "transform 3s ease-out";
+  canvas.style.transform = `rotate(${rotation}deg)`;
+
+  setTimeout(()=>{
+    document.getElementById("result").innerText =
+    "🎯 今天吃：" + foods[index];
+  },3000);
+}
+
+</script>
+
+</body>
+</html>
