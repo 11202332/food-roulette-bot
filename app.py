@@ -5,10 +5,10 @@ import os
 
 app = Flask(__name__)
 
-# 🔑 請貼你的 LINE Channel Access Token
+# 🔑 LINE Token（一定要換）
 LINE_TOKEN = "請貼你的Channel Access Token"
 
-# 🍔 美食清單
+# 🍔 美食資料
 food_list = [
     "火鍋 🍲",
     "牛肉麵 🍜",
@@ -20,7 +20,7 @@ food_list = [
     "滷肉飯 🍚"
 ]
 
-# 🎡 Flex 卡片（轉盤畫面）
+# 🎡 Flex 卡片
 def flex_food(result):
     return {
         "type": "flex",
@@ -49,7 +49,7 @@ def flex_food(result):
         }
     }
 
-# 📩 LINE 回覆 API
+# 📩 回覆 function
 def reply(reply_token, messages):
     url = "https://api.line.me/v2/bot/message/reply"
 
@@ -64,7 +64,6 @@ def reply(reply_token, messages):
     }
 
     r = requests.post(url, headers=headers, json=data)
-
     print("REPLY STATUS:", r.status_code)
     print("REPLY TEXT:", r.text)
 
@@ -72,32 +71,36 @@ def reply(reply_token, messages):
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
-        body = request.json
+        body = request.get_json(force=True, silent=True)
         print("===== BODY =====")
         print(body)
 
-        if not body or "events" not in body:
+        if not body:
             return "OK"
 
-        event = body["events"][0]
+        events = body.get("events", [])
+        if len(events) == 0:
+            return "OK"
+
+        event = events[0]
+
         reply_token = event.get("replyToken")
+        if not reply_token:
+            return "OK"
 
         msg = ""
 
-        # 🟢 一般訊息
-        if "message" in event:
+        # 🟢 message
+        if event.get("message"):
             msg = event["message"].get("text", "")
-            print("MESSAGE:", msg)
 
-        # 🟡 圖文選單 postback
-        elif "postback" in event:
+        # 🟡 postback（圖文選單）
+        elif event.get("postback"):
             msg = event["postback"].get("data", "")
-            print("POSTBACK:", msg)
 
-        # 🧼 清理字串（避免空格影響）
+        print("RAW MSG:", msg)
+
         msg = (msg or "").replace(" ", "").lower()
-
-        print("FINAL MSG:", msg)
 
         # 🎯 轉盤判斷（核心）
         if msg and (
@@ -112,8 +115,7 @@ def webhook():
                 flex_food(result)
             ])
 
-        # 🧪 fallback（測試用）
-        elif msg:
+        else:
             reply(reply_token, [
                 {"type": "text", "text": f"收到：{msg}"}
             ])
@@ -121,7 +123,7 @@ def webhook():
         return "OK"
 
     except Exception as e:
-        print("ERROR:", str(e))
+        print("🔥 ERROR:", str(e))
         return "OK"
 
 
