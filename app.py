@@ -1,131 +1,84 @@
-from flask import Flask, request
+from flask import Flask, request, abort
 import requests
-import random
 import os
+import json
 
 app = Flask(__name__)
 
-# 🔑 LINE Token（一定要換成你自己的）
-LINE_TOKEN = "6V8gpFh118EDegFSi7PQnX98PUqOW8gGErX+FYj2XHmpHKxJ5oqG+Ohbrynn3FT6FjHtgdxziErSF6GzNDwMRsUlHWY8QAxw6WKQQ3/9uPEYoqSPlhOmcYYj9dg6FlvGJ3lTMps1K8vIbDSYEJ4m9gdB04t89/1O/w1cDnyilFU="
+# 🔑 LINE Token（換成你的）
+LINE_TOKEN = "你的Channel Access Token"
+LINE_API = "https://api.line.me/v2/bot/message/reply"
 
-# 🍔 美食清單
-food_list = [
-    "火鍋 🍲",
-    "牛肉麵 🍜",
-    "便當 🍱",
-    "義大利麵 🍝",
-    "早餐店 🥪",
-    "咖哩飯 🍛",
-    "燒肉 🍖",
-    "滷肉飯 🍚"
-]
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {LINE_TOKEN}"
+}
 
-# 🎡 Flex卡片
-def flex_food(result):
-    return {
-        "type": "flex",
-        "altText": "美食轉盤結果",
-        "contents": {
-            "type": "bubble",
-            "body": {
-                "type": "box",
-                "layout": "vertical",
-                "contents": [
-                    {
-                        "type": "text",
-                        "text": "🎡 今天吃這個！",
-                        "weight": "bold",
-                        "size": "xl"
-                    },
-                    {
-                        "type": "text",
-                        "text": result,
-                        "weight": "bold",
-                        "size": "xxl",
-                        "color": "#1DB446"
-                    }
-                ]
-            }
-        }
-    }
-
-# 📩 reply function（已加 debug）
+# 👉 發送回覆
 def reply(reply_token, messages):
-    url = "https://api.line.me/v2/bot/message/reply"
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_TOKEN}"
-    }
-
-    data = {
+    payload = {
         "replyToken": reply_token,
         "messages": messages
     }
-
-    r = requests.post(url, headers=headers, json=data)
-
-    print("==== REPLY DEBUG ====")
-    print("STATUS:", r.status_code)
-    print("TEXT:", r.text)
+    requests.post(LINE_API, headers=headers, data=json.dumps(payload))
 
 
+# 📩 webhook
 @app.route("/webhook", methods=["POST"])
 def webhook():
+
+    body = request.get_json()
+    print("===== BODY =====")
+    print(body)
+
     try:
-        body = request.get_json(force=True, silent=True)
+        event = body["events"][0]
+        reply_token = event["replyToken"]
+        msg = event["message"]["text"]
 
-        print("===== BODY =====")
-        print(body)
-
-        if not body:
-            return "OK"
-
-        events = body.get("events", [])
-        if not events:
-            return "OK"
-
-        event = events[0]
-
-        reply_token = event.get("replyToken")
-        if not reply_token:
-            return "OK"
-
-        msg = ""
-
-        # 🟢 message
-        if event.get("message"):
-            msg = event["message"].get("text", "")
-
-        # 🟡 postback
-        elif event.get("postback"):
-            msg = event["postback"].get("data", "")
-
-        print("RAW MSG:", msg)
-
-        msg = (msg or "").replace(" ", "").lower()
-
-        # 🎯 轉盤判斷
-        if ("轉盤" in msg or "美食" in msg or "food" in msg or "roulette" in msg):
-
-            result = random.choice(food_list)
+        # 🎡 美食轉盤入口
+        if msg == "美食轉盤":
 
             reply(reply_token, [
-                flex_food(result)
+                {
+                    "type": "text",
+                    "text": "🎡 幫你打開美食轉盤！"
+                },
+                {
+                    "type": "text",
+                    "text": "點下面按鈕👇",
+                    "quickReply": {
+                        "items": [
+                            {
+                                "type": "action",
+                                "action": {
+                                    "type": "uri",
+                                    "label": "🎡 開啟轉盤",
+                                    "uri": "https://你的網頁網址"
+                                }
+                            }
+                        ]
+                    }
+                }
             ])
 
+        # 🧪 測試
         else:
             reply(reply_token, [
-                {"type": "text", "text": f"收到：{msg}"}
+                {
+                    "type": "text",
+                    "text": f"收到：{msg}"
+                }
             ])
 
         return "OK"
 
     except Exception as e:
-        print("🔥 ERROR:", str(e))
-        return "OK"
+        print("ERROR:", e)
+        return "ERROR", 200
 
 
+# 🚀 啟動
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
