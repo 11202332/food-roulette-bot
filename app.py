@@ -5,13 +5,16 @@ import json
 
 app = Flask(__name__)
 
-LINE_TOKEN = "6V8gpFh118EDegFSi7PQnX98PUqOW8gGErX+FYj2XHmpHKxJ5oqG+Ohbrynn3FT6FjHtgdxziErSF6GzNDwMRsUlHWY8QAxw6WKQQ3/9uPEYoqSPlhOmcYYj9dg6FlvGJ3lTMps1K8vIbDSYEJ4m9gdB04t89/1O/w1cDnyilFU="
+LINE_TOKEN = os.environ.get("LINE_TOKEN")
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
 headers = {
     "Content-Type": "application/json",
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
+
+# ⭐ 假會員資料（之後可以改成資料庫）
+members = []
 
 def reply(reply_token, messages):
     payload = {
@@ -32,31 +35,46 @@ def webhook():
         event = body["events"][0]
         reply_token = event["replyToken"]
         msg = event["message"]["text"]
+        user_id = event["source"]["userId"]
 
+        # 🎡 美食轉盤
         if msg == "美食轉盤":
 
-            reply(reply_token, [
-                {
-                    "type": "text",
-                    "text": "🎡 幫你打開美食轉盤！"
-                },
-                {
-                    "type": "text",
-                    "text": "點下面按鈕👇",
-                    "quickReply": {
-                        "items": [
-                            {
-                                "type": "action",
-                                "action": {
-                                    "type": "uri",
-                                    "label": "🎡 開啟轉盤",
-                                    "uri": "https://cute-melomakarona-859d27.netlify.app"
-                                }
-                            }
-                        ]
+            # ✔ 會員
+            if user_id in members:
+
+                reply(reply_token, [
+                    {
+                        "type": "text",
+                        "text": "🎡 歡迎會員使用美食轉盤！"
+                    },
+                    {
+                        "type": "text",
+                        "text": "👉 點這裡開啟轉盤："
+                    },
+                    {
+                        "type": "text",
+                        "text": "https://cute-melomakarona-859d27.netlify.app"
                     }
-                }
-            ])
+                ])
+
+            # ❌ 非會員
+            else:
+
+                reply(reply_token, [
+                    {
+                        "type": "text",
+                        "text": "🔒 此功能為會員限定"
+                    },
+                    {
+                        "type": "text",
+                        "text": "📌 請先完成註冊＋繳費"
+                    },
+                    {
+                        "type": "text",
+                        "text": "📝 表單：https://https://forms.gle/jYykimjWcX1rgYRW8"
+                    }
+                ])
 
         else:
             reply(reply_token, [
