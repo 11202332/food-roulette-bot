@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # 🔑 LINE Token（一定要換成你自己的）
-LINE_TOKEN = "請貼你的Channel Access Token"
+LINE_TOKEN = "6V8gpFh118EDegFSi7PQnX98PUqOW8gGErX+FYj2XHmpHKxJ5oqG+Ohbrynn3FT6FjHtgdxziErSF6GzNDwMRsUlHWY8QAxw6WKQQ3/9uPEYoqSPlhOmcYYj9dg6FlvGJ3lTMps1K8vIbDSYEJ4m9gdB04t89/1O/w1cDnyilFU="
 
 # 🍔 美食清單
 food_list = [
