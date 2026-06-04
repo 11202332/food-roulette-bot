@@ -5,10 +5,8 @@ import json
 
 app = Flask(__name__)
 
-# LINE Token
+# LINE Token（Render 環境變數）
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
-
-print("TOKEN =", LINE_TOKEN)
 
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
@@ -17,7 +15,10 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-members = []
+# ⭐ 會員清單（你之後把 userId 加進來）
+members = [
+    # "Uxxxxxxxxxxxxxxxxxxxx"
+]
 
 def reply(reply_token, messages):
 
@@ -25,8 +26,6 @@ def reply(reply_token, messages):
         "replyToken": reply_token,
         "messages": messages
     }
-
-    print("PAYLOAD =", payload)
 
     res = requests.post(
         LINE_API,
@@ -38,50 +37,40 @@ def reply(reply_token, messages):
     print("RESPONSE =", res.text)
 
 
-@app.route("/")
-def home():
-    return "Bot Running"
-
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
     body = request.get_json()
-
-    print("===== BODY =====")
-    print(body)
+    print("BODY =", body)
 
     try:
-
         event = body["events"][0]
 
         reply_token = event["replyToken"]
-
         msg = event["message"]["text"]
-
         user_id = event["source"]["userId"]
 
-        print("收到訊息 =", msg)
-        print("USER ID =", user_id)
+        print("MSG =", msg)
+        print("USER_ID =", user_id)
 
-        # 美食轉盤
+        # 🎡 美食轉盤功能
         if msg == "美食轉盤":
 
-            # 會員
+            # ✔ 會員
             if user_id in members:
 
                 reply(reply_token, [
                     {
                         "type": "text",
-                        "text": "🎡 歡迎會員使用美食轉盤"
+                        "text": "🎡 這是你的美食轉盤"
                     },
                     {
                         "type": "text",
-                        "text": "https://cute-melomakarona-859d27.netlify.app"
+                        "text": "👉 https://cute-melomakarona-859d27.netlify.app"
                     }
                 ])
 
-            # 非會員
+            # ❌ 非會員
             else:
 
                 reply(reply_token, [
@@ -91,11 +80,11 @@ def webhook():
                     },
                     {
                         "type": "text",
-                        "text": "📌 請先完成註冊與繳費"
+                        "text": "📌 請加入會員才能使用轉盤"
                     },
                     {
                         "type": "text",
-                        "text": "📝 https://forms.gle/jYykimjWcX1rgYRW8"
+                        "text": "📝 加入會員表單：https://forms.gle/jYykimjWcX1rgYRW8"
                     }
                 ])
 
@@ -111,17 +100,18 @@ def webhook():
         return "OK"
 
     except Exception as e:
-
         print("ERROR =", str(e))
-
         return "OK"
 
 
+@app.route("/")
+def home():
+    return "Bot is running"
+
+
+# 🚀 啟動
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
 
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+    app.run(host="0.0.0.0", port=port)
