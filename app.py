@@ -5,8 +5,10 @@ import json
 
 app = Flask(__name__)
 
-# 🔑 LINE Token（一定要在 Render 設 Environment Variable）
+# LINE Token
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
+
+print("TOKEN =", LINE_TOKEN)
 
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
@@ -15,14 +17,16 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-# ⭐ 會員名單（之後可升級資料庫）
 members = []
 
 def reply(reply_token, messages):
+
     payload = {
         "replyToken": reply_token,
         "messages": messages
     }
+
+    print("PAYLOAD =", payload)
 
     res = requests.post(
         LINE_API,
@@ -30,37 +34,46 @@ def reply(reply_token, messages):
         data=json.dumps(payload)
     )
 
-    # 🔥 debug（一定要留）
-    print("STATUS:", res.status_code)
-    print("RESPONSE:", res.text)
+    print("STATUS =", res.status_code)
+    print("RESPONSE =", res.text)
+
+
+@app.route("/")
+def home():
+    return "Bot Running"
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
     body = request.get_json()
-    print("BODY:", body)
+
+    print("===== BODY =====")
+    print(body)
 
     try:
+
         event = body["events"][0]
+
         reply_token = event["replyToken"]
+
         msg = event["message"]["text"]
+
         user_id = event["source"]["userId"]
 
-        # 🎡 美食轉盤
+        print("收到訊息 =", msg)
+        print("USER ID =", user_id)
+
+        # 美食轉盤
         if msg == "美食轉盤":
 
-            # ✔ 會員
+            # 會員
             if user_id in members:
 
                 reply(reply_token, [
                     {
                         "type": "text",
-                        "text": "🎡 歡迎會員使用美食轉盤！"
-                    },
-                    {
-                        "type": "text",
-                        "text": "👉 點這裡開啟："
+                        "text": "🎡 歡迎會員使用美食轉盤"
                     },
                     {
                         "type": "text",
@@ -68,7 +81,7 @@ def webhook():
                     }
                 ])
 
-            # ❌ 非會員
+            # 非會員
             else:
 
                 reply(reply_token, [
@@ -82,7 +95,7 @@ def webhook():
                     },
                     {
                         "type": "text",
-                        "text": "📝 表單：https://forms.gle/jYykimjWcX1rgYRW8"
+                        "text": "📝 https://forms.gle/jYykimjWcX1rgYRW8"
                     }
                 ])
 
@@ -98,11 +111,17 @@ def webhook():
         return "OK"
 
     except Exception as e:
-        print("ERROR:", e)
-        return "ERROR", 200
+
+        print("ERROR =", str(e))
+
+        return "OK"
 
 
-# 🚀 Render 啟動
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
