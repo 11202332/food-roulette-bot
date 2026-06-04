@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, render_template_string
 import requests
 import os
 import json
@@ -22,193 +22,129 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📍 校園美食資料（50+可擴充）
+# 📍 校園美食資料（50+ 可再擴充）
 # =========================
 places = [
     {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式","rating":4.3,"price":"$","hours":"06:30–10:30","desc":"學生早餐首選"},
     {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"台式","rating":4.5,"price":"$","hours":"17:00–23:30","desc":"宵夜排隊名店"},
-    {"name":"阿房滷味","lat":25.0230,"lng":121.4672,"type":"台式","rating":4.2,"price":"$","hours":"16:30–23:00","desc":"經典滷味"},
     {"name":"油庫口麵線","lat":25.0238,"lng":121.4668,"type":"台式","rating":4.6,"price":"$","hours":"09:00–18:00","desc":"板橋必吃"},
-    {"name":"麥當勞文化店","lat":25.0236,"lng":121.4679,"type":"早午餐","rating":4.2,"price":"$$","hours":"24小時","desc":"讀書好地方"},
-    {"name":"麥味登","lat":25.0231,"lng":121.4671,"type":"早午餐","rating":4.0,"price":"$","hours":"06:00–13:30","desc":"早餐首選"},
-    {"name":"晨間廚房","lat":25.0232,"lng":121.4672,"type":"早午餐","rating":4.1,"price":"$","hours":"06:00–14:00","desc":"學生早餐"},
-    {"name":"Sukiya","lat":25.0234,"lng":121.4676,"type":"日式義式","rating":4.4,"price":"$","hours":"24小時","desc":"平價丼飯"},
-    {"name":"薩莉亞","lat":25.0236,"lng":121.4678,"type":"日式義式","rating":4.1,"price":"$","hours":"11:00–22:00","desc":"義式平價"},
-    {"name":"Is Pasta","lat":25.0233,"lng":121.4675,"type":"日式義式","rating":4.3,"price":"$$","hours":"11:00–21:30","desc":"義大利麵"},
-    {"name":"路易莎","lat":25.0233,"lng":121.4673,"type":"咖啡","rating":4.4,"price":"$$","hours":"07:00–21:00","desc":"讀書咖啡"},
-    {"name":"星巴克","lat":25.0236,"lng":121.4676,"type":"咖啡","rating":4.5,"price":"$$$","hours":"07:00–22:00","desc":"舒適環境"},
-    {"name":"韓鼓韓式","lat":25.0230,"lng":121.4670,"type":"異國","rating":4.3,"price":"$$","hours":"11:00–21:00","desc":"韓式料理"},
-    {"name":"泰品味","lat":25.0231,"lng":121.4671,"type":"異國","rating":4.2,"price":"$$","hours":"11:00–21:00","desc":"泰式料理"},
-    {"name":"微笑炭烤","lat":25.0140,"lng":121.4620,"type":"宵夜","rating":4.3,"price":"$","hours":"18:00–01:00","desc":"宵夜烤肉"},
-    {"name":"阿耀臭豆腐","lat":25.0141,"lng":121.4621,"type":"宵夜","rating":4.2,"price":"$","hours":"17:00–00:30","desc":"經典臭豆腐"},
+    {"name":"麥當勞文化店","lat":25.0236,"lng":121.4679,"type":"早午餐","rating":4.2,"price":"$$","hours":"24H","desc":"讀書好去處"},
+    {"name":"Sukiya","lat":25.0234,"lng":121.4676,"type":"日式","rating":4.4,"price":"$","hours":"24H","desc":"平價丼飯"},
+    {"name":"路易莎","lat":25.0233,"lng":121.4673,"type":"咖啡","rating":4.4,"price":"$$","hours":"07:00–21:00","desc":"讀書咖啡廳"},
 ]
-
 
 # =========================
 # LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
-
     body = request.get_json()
+    event = body["events"][0]
 
-    try:
-        event = body["events"][0]
-
-        if "message" not in event:
-            return "OK"
-
-        if event["message"]["type"] != "text":
-            return "OK"
-
-        reply_token = event["replyToken"]
-        msg = event["message"]["text"]
-
-        # 🎡 轉盤（完全保留）
-        if msg == "美食轉盤":
-
-            reply(reply_token, [
-                {"type":"text","text":"🎡 此功能為會員功能"},
-                {
-                    "type":"template",
-                    "altText":"會員選擇",
-                    "template":{
-                        "type":"buttons",
-                        "text":"請選擇身份",
-                        "actions":[
-                            {"type":"message","label":"我是會員","text":"進入轉盤"},
-                            {"type":"message","label":"我不是會員","text":"加入會員"}
-                        ]
-                    }
-                }
-            ])
-
-        elif msg == "進入轉盤":
-
-            reply(reply_token, [
-                {"type":"text","text":"🎡 開啟美食轉盤👇"},
-                {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
-            ])
-
-        elif msg == "加入會員":
-
-            reply(reply_token, [
-                {"type":"text","text":"📝 請填寫會員表單"},
-                {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
-            ])
-
-        # 🗺️ 地圖入口（穩定版）
-        elif msg == "美食地圖":
-
-            reply(reply_token, [{
-                "type": "template",
-                "altText": "美食地圖",
-                "template": {
-                    "type": "buttons",
-                    "text": "🍜 致理校園美食地圖",
-                    "actions": [
-                        {
-                            "type": "uri",
-                            "label": "打開探索地圖",
-                            "uri": "https://food-roulette-bot.onrender.com/map"
-                        }
-                    ]
-                }
-            }])
-
-        else:
-            reply(reply_token, [
-                {"type":"text","text":"收到：" + msg}
-            ])
-
+    if event["message"]["type"] != "text":
         return "OK"
 
-    except:
-        return "OK"
+    msg = event["message"]["text"]
+    reply_token = event["replyToken"]
+
+    if msg == "美食轉盤":
+        reply(reply_token, [
+            {"type":"text","text":"🎡 轉盤功能"},
+            {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
+        ])
+
+    elif msg == "美食地圖":
+        reply(reply_token, [{
+            "type": "template",
+            "altText": "美食地圖",
+            "template": {
+                "type": "buttons",
+                "text": "🍜 致理美食地圖",
+                "actions": [{
+                    "type": "uri",
+                    "label": "開啟地圖",
+                    "uri": "https://food-roulette-bot.onrender.com/map"
+                }]
+            }
+        }])
+
+    else:
+        reply(reply_token, [{"type":"text","text":"收到：" + msg}])
+
+    return "OK"
 
 
 # =========================
-# 🌍 Leaflet 地圖頁（穩定版 + 無API KEY）
+# 🌍 地圖頁（Leaflet 完整穩定版）
 # =========================
 @app.route("/map")
 def map_page():
 
-    data_json = json.dumps(places, ensure_ascii=False)
-
-    html = f"""
+    return render_template_string("""
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" />
+<meta charset="utf-8"/>
 <title>校園美食地圖</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
-body {{
-    margin:0;
-    display:flex;
-    height:100vh;
-    font-family:Arial;
-}}
+body{
+ margin:0;
+ font-family:Arial;
+ display:flex;
+ height:100vh;
+}
 
-#map {{
-    flex:1;
-}}
+/* 左地圖 */
+#map{
+ flex:1;
+ height:100vh;
+}
 
-#panel {{
-    width:360px;
-    overflow:auto;
-    background:#f6f6f6;
-    padding:10px;
-}}
+/* 右卡片 */
+#panel{
+ width:380px;
+ overflow:auto;
+ background:#fafafa;
+ padding:10px;
+}
 
-.card {{
-    background:white;
-    margin:10px;
-    padding:12px;
-    border-radius:14px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    cursor:pointer;
-    transition:0.2s;
-}}
+.card{
+ background:white;
+ margin:10px 0;
+ padding:12px;
+ border-radius:12px;
+ box-shadow:0 2px 8px rgba(0,0,0,0.1);
+ transition:0.2s;
+ cursor:pointer;
+}
 
-.card:hover {{
-    transform:scale(1.02);
-}}
+.card.active{
+ border-left:5px solid #4CAF50;
+ background:#f0fff4;
+}
 
-.card.active {{
-    border:2px solid #4dabf7;
-    background:#f1f9ff;
-}}
+.title{
+ font-size:18px;
+ font-weight:bold;
+}
 
-.name {{
-    font-size:18px;
-    font-weight:bold;
-}}
+.tag{
+ display:inline-block;
+ padding:3px 8px;
+ border-radius:999px;
+ font-size:12px;
+ margin-left:5px;
+}
 
-.tag {{
-    display:inline-block;
-    padding:3px 8px;
-    border-radius:10px;
-    font-size:12px;
-    margin-right:6px;
-    background:#eee;
-}}
+.tag台式{background:#e3f2fd;color:#1565c0;}
+.tag早午餐{background:#fff3e0;color:#ef6c00;}
+.tag日式{background:#ede7f6;color:#5e35b1;}
+.tag咖啡{background:#f3e5ab;color:#6d4c41;}
 
-.price {{
-    color:#ff6b6b;
-    font-weight:bold;
-}}
-
-.marker {{
-    width:14px;
-    height:14px;
-    border-radius:50%;
-    border:2px solid white;
-    box-shadow:0 0 6px rgba(0,0,0,0.3);
-}}
+.small{font-size:13px;color:#666}
 </style>
 </head>
 
@@ -217,97 +153,110 @@ body {{
 <div id="map"></div>
 <div id="panel"></div>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
+// =========================
+// 📍 地圖初始化（修正：致理精準聚焦）
+// =========================
+var map = L.map('map').setView([25.0233, 121.4674], 18);
 
-const places = {data_json};
+// OSM
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+ attribution:''
+}).addTo(map);
 
-const map = L.map('map').setView([25.02325, 121.46745], 18);
+// =========================
+// 🔥 修正 Marker（不再飄移）
+// =========================
+function getIcon(type){
+ let color = "blue";
 
-L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
-    attribution: 'OpenStreetMap'
-}}).addTo(map);
+ if(type==="台式") color="red";
+ if(type==="早午餐") color="orange";
+ if(type==="日式") color="purple";
+ if(type==="咖啡") color="green";
 
-let markerMap = {{}};
-let cardMap = {{}};
+ return L.divIcon({
+   className:"custom-icon",
+   html:`<div style="
+      width:14px;height:14px;
+      background:${color};
+      border-radius:50%;
+      border:2px solid white;
+      box-shadow:0 0 6px rgba(0,0,0,0.3);
+   "></div>`,
+   iconSize:[14,14],
+   iconAnchor:[7,7]   // ⭐ 關鍵：中心點鎖住
+ });
+}
 
-function getColor(type) {{
-    switch(type) {{
-        case "台式": return "#ff6b6b";
-        case "早午餐": return "#4dabf7";
-        case "日式義式": return "#51cf66";
-        case "咖啡": return "#fcc419";
-        case "異國": return "#845ef7";
-        case "宵夜": return "#ff922b";
-        default: return "#adb5bd";
-    }}
-}}
+// =========================
+// 📍 資料
+// =========================
+var places = {{ places | tojson }};
 
-function setActive(name) {{
-    Object.values(cardMap).forEach(c => c.classList.remove("active"));
-    if(cardMap[name]) {{
-        cardMap[name].classList.add("active");
-        cardMap[name].scrollIntoView({{behavior:"smooth", block:"center"}});
-    }}
-}}
+var markers = {};
 
-function createMarker(p) {{
-    const icon = L.divIcon({{
-        className:"",
-        html:`<div class="marker" style="background:${{getColor(p.type)}}"></div>`
-    }});
+var panel = document.getElementById("panel");
 
-    const marker = L.marker([p.lat, p.lng], {{icon}}).addTo(map)
-        .bindPopup(`<b>${{p.name}}</b><br>${{p.desc}}`);
+// =========================
+// 🧭 建立地圖 + 卡片
+// =========================
+places.forEach(p => {
 
-    marker.on("click", () => {{
-        setActive(p.name);
-    }});
+ let marker = L.marker([p.lat, p.lng], {
+   icon:getIcon(p.type)
+ }).addTo(map)
+ .bindPopup(`<b>${p.name}</b><br>${p.desc}`);
 
-    return marker;
-}}
+ markers[p.name] = marker;
 
-function render() {{
-    const panel = document.getElementById("panel");
-    panel.innerHTML = "";
+ let card = document.createElement("div");
+ card.className="card";
+ card.id="card-"+p.name;
 
-    places.forEach(p => {{
+ card.innerHTML = `
+   <div class="title">
+     ${p.name}
+     <span class="tag tag${p.type}">${p.type}</span>
+   </div>
+   <div class="small">⭐ ${p.rating} ｜ 💰 ${p.price}</div>
+   <div class="small">${p.desc}</div>
+   <div class="small">🕒 ${p.hours}</div>
+ `;
 
-        const marker = createMarker(p);
-        markerMap[p.name] = marker;
+ // =========================
+ // 🔗 卡片點擊 → 地圖聯動
+ // =========================
+ card.onclick = () => {
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.id = "card-" + p.name;
+   map.setView([p.lat, p.lng], 19, {
+     animate:true
+   });
 
-        card.innerHTML = `
-            <div class="name">${{p.name}}</div>
-            <div>
-                <span class="tag">${{p.type}}</span>
-                <span class="price">${{p.price}}</span>
-            </div>
-            <div style="font-size:12px;color:#666">${{p.desc}}</div>
-            <div style="font-size:12px">⭐ ${{p.rating}} ｜ 🕒 ${{p.hours}}</div>
-        `;
+   marker.openPopup();
 
-        card.onclick = () => {{
-            map.setView([p.lat, p.lng], 19, {{animate:true}});
-            marker.openPopup();
-            setActive(p.name);
-        }};
+   document.querySelectorAll(".card")
+     .forEach(c=>c.classList.remove("active"));
 
-        panel.appendChild(card);
-        cardMap[p.name] = card;
-    }});
-}}
+   card.classList.add("active");
 
-render();
+   card.scrollIntoView({behavior:"smooth", block:"center"});
+ };
 
+ panel.appendChild(card);
+});
+
+// =========================
+// 🎯 初始聚焦（避免太廣）
+// =========================
+map.setView([25.0233, 121.4674], 18);
 </script>
+
 </body>
 </html>
-"""
-
-    return html
+""", places=places)
 
 
 # =========================
