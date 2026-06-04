@@ -14,11 +14,6 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-# 👉 你先把自己設成會員（不然永遠不是會員）
-members = [
-    "Uxxxxxxxxxxxxxxxxxxxx"
-]
-
 def reply(reply_token, messages):
     payload = {
         "replyToken": reply_token,
@@ -36,70 +31,62 @@ def webhook():
     event = body["events"][0]
     reply_token = event["replyToken"]
     msg = event["message"]["text"]
-    user_id = event["source"]["userId"]
 
-    # 🎡 按「美食轉盤」
+    # 🎡 點「美食轉盤」
     if msg == "美食轉盤":
 
         reply(reply_token, [
             {
                 "type": "text",
-                "text": "🎡 要使用美食轉盤請選擇："
+                "text": "🎡 此功能為會員功能"
             },
             {
                 "type": "template",
                 "altText": "會員選擇",
                 "template": {
                     "type": "buttons",
-                    "text": "你是會員嗎？",
+                    "text": "請選擇身份",
                     "actions": [
                         {
                             "type": "message",
                             "label": "我是會員",
-                            "text": "會員轉盤"
+                            "text": "進入轉盤"
                         },
                         {
                             "type": "message",
                             "label": "我不是會員",
-                            "text": "非會員提示"
+                            "text": "加入會員"
                         }
                     ]
                 }
             }
         ])
 
-    # ✔ 會員進轉盤
-    elif msg == "會員轉盤":
-
-        if user_id in members:
-
-            reply(reply_token, [
-                {
-                    "type": "text",
-                    "text": "🎡 這是你的美食轉盤👇"
-                },
-                {
-                    "type": "text",
-                    "text": "https://cute-melomakarona-859d27.netlify.app"
-                }
-            ])
-
-        else:
-
-            reply(reply_token, [
-                {
-                    "type": "text",
-                    "text": "🔒 你目前不是會員，無法使用轉盤"
-                }
-            ])
-
-    # ❌ 非會員提示
-    elif msg == "非會員提示":
+    # ✔ 不管是不是會員 → 都可以進轉盤
+    elif msg == "進入轉盤":
 
         reply(reply_token, [
             {
                 "type": "text",
-                "text": "⚠️ 此功能為會員功能"
+                "text": "🎡 開啟美食轉盤👇"
+            },
+            {
+                "type": "text",
+                "text": "https://cute-melomakarona-859d27.netlify.app"
+            }
+        ])
+
+    # ❌ 加入會員
+    elif msg == "加入會員":
+
+        reply(reply_token, [
+            {
+                "type": "text",
+                "text": "📝 請填寫會員表單"
+            },
+            {
+                "type": "text",
+                "text": "https://forms.gle/jYykimjWcX1rgYRW8"
             }
         ])
 
