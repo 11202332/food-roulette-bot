@@ -22,7 +22,7 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📍 50+ 店家資料（可再擴充）
+# 📍 校園美食資料（50+可擴充）
 # =========================
 places = [
     {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式","rating":4.3,"price":"$","hours":"06:30–10:30","desc":"學生早餐首選"},
@@ -42,6 +42,7 @@ places = [
     {"name":"微笑炭烤","lat":25.0140,"lng":121.4620,"type":"宵夜","rating":4.3,"price":"$","hours":"18:00–01:00","desc":"宵夜烤肉"},
     {"name":"阿耀臭豆腐","lat":25.0141,"lng":121.4621,"type":"宵夜","rating":4.2,"price":"$","hours":"17:00–00:30","desc":"經典臭豆腐"},
 ]
+
 
 # =========================
 # LINE webhook
@@ -63,7 +64,7 @@ def webhook():
         reply_token = event["replyToken"]
         msg = event["message"]["text"]
 
-        # 🎡 轉盤（完全不動）
+        # 🎡 轉盤（完全保留）
         if msg == "美食轉盤":
 
             reply(reply_token, [
@@ -96,7 +97,7 @@ def webhook():
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
-        # 🗺️ 地圖入口（修正版：不用 Google Key）
+        # 🗺️ 地圖入口（穩定版）
         elif msg == "美食地圖":
 
             reply(reply_token, [{
@@ -104,11 +105,11 @@ def webhook():
                 "altText": "美食地圖",
                 "template": {
                     "type": "buttons",
-                    "text": "🍜 致理美食地圖（探索模式）",
+                    "text": "🍜 致理校園美食地圖",
                     "actions": [
                         {
                             "type": "uri",
-                            "label": "打開地圖",
+                            "label": "打開探索地圖",
                             "uri": "https://food-roulette-bot.onrender.com/map"
                         }
                     ]
@@ -127,7 +128,7 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁（Leaflet版：免Key + 可點 + 真正地圖感）
+# 🌍 Leaflet 地圖頁（穩定版 + 無API KEY）
 # =========================
 @app.route("/map")
 def map_page():
@@ -147,9 +148,9 @@ def map_page():
 <style>
 body {{
     margin:0;
-    font-family:Arial;
     display:flex;
     height:100vh;
+    font-family:Arial;
 }}
 
 #map {{
@@ -157,9 +158,9 @@ body {{
 }}
 
 #panel {{
-    width:380px;
+    width:360px;
     overflow:auto;
-    background:#f7f7f7;
+    background:#f6f6f6;
     padding:10px;
 }}
 
@@ -168,8 +169,18 @@ body {{
     margin:10px;
     padding:12px;
     border-radius:14px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
     cursor:pointer;
+    transition:0.2s;
+}}
+
+.card:hover {{
+    transform:scale(1.02);
+}}
+
+.card.active {{
+    border:2px solid #4dabf7;
+    background:#f1f9ff;
 }}
 
 .name {{
@@ -182,12 +193,21 @@ body {{
     padding:3px 8px;
     border-radius:10px;
     font-size:12px;
-    margin-right:5px;
+    margin-right:6px;
+    background:#eee;
 }}
 
 .price {{
     color:#ff6b6b;
     font-weight:bold;
+}}
+
+.marker {{
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    border:2px solid white;
+    box-shadow:0 0 6px rgba(0,0,0,0.3);
 }}
 </style>
 </head>
@@ -195,41 +215,71 @@ body {{
 <body>
 
 <div id="map"></div>
-
 <div id="panel"></div>
 
 <script>
 
 const places = {data_json};
 
-// 初始化地圖（致理附近）
-const map = L.map('map').setView([25.0233, 121.4675], 17);
+const map = L.map('map').setView([25.02325, 121.46745], 18);
 
-// OSM 地圖
 L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
-    attribution: '&copy; OpenStreetMap'
+    attribution: 'OpenStreetMap'
 }}).addTo(map);
 
-let markers = [];
+let markerMap = {{}};
+let cardMap = {{}};
 
-function addMarker(p) {{
-    const m = L.marker([p.lat, p.lng]).addTo(map)
-        .bindPopup(`<b>${{p.name}}</b><br>${{p.desc}}`);
-    markers.push({{name:p.name, marker:m}});
+function getColor(type) {{
+    switch(type) {{
+        case "台式": return "#ff6b6b";
+        case "早午餐": return "#4dabf7";
+        case "日式義式": return "#51cf66";
+        case "咖啡": return "#fcc419";
+        case "異國": return "#845ef7";
+        case "宵夜": return "#ff922b";
+        default: return "#adb5bd";
+    }}
 }}
 
-function renderCards() {{
+function setActive(name) {{
+    Object.values(cardMap).forEach(c => c.classList.remove("active"));
+    if(cardMap[name]) {{
+        cardMap[name].classList.add("active");
+        cardMap[name].scrollIntoView({{behavior:"smooth", block:"center"}});
+    }}
+}}
+
+function createMarker(p) {{
+    const icon = L.divIcon({{
+        className:"",
+        html:`<div class="marker" style="background:${{getColor(p.type)}}"></div>`
+    }});
+
+    const marker = L.marker([p.lat, p.lng], {{icon}}).addTo(map)
+        .bindPopup(`<b>${{p.name}}</b><br>${{p.desc}}`);
+
+    marker.on("click", () => {{
+        setActive(p.name);
+    }});
+
+    return marker;
+}}
+
+function render() {{
     const panel = document.getElementById("panel");
     panel.innerHTML = "";
 
     places.forEach(p => {{
 
-        addMarker(p);
+        const marker = createMarker(p);
+        markerMap[p.name] = marker;
 
-        const div = document.createElement("div");
-        div.className = "card";
+        const card = document.createElement("div");
+        card.className = "card";
+        card.id = "card-" + p.name;
 
-        div.innerHTML = `
+        card.innerHTML = `
             <div class="name">${{p.name}}</div>
             <div>
                 <span class="tag">${{p.type}}</span>
@@ -239,22 +289,20 @@ function renderCards() {{
             <div style="font-size:12px">⭐ ${{p.rating}} ｜ 🕒 ${{p.hours}}</div>
         `;
 
-        div.onclick = () => {{
-            const mk = markers.find(m => m.name === p.name);
-            if(mk){{
-                map.setView([p.lat, p.lng], 18);
-                mk.marker.openPopup();
-            }}
-        }}
+        card.onclick = () => {{
+            map.setView([p.lat, p.lng], 19, {{animate:true}});
+            marker.openPopup();
+            setActive(p.name);
+        }};
 
-        panel.appendChild(div);
+        panel.appendChild(card);
+        cardMap[p.name] = card;
     }});
 }}
 
-renderCards();
+render();
 
 </script>
-
 </body>
 </html>
 """
