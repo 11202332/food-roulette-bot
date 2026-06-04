@@ -22,7 +22,7 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📍 美食資料（可擴充 50+）
+# 📍 美食資料
 # =========================
 places = [
     {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式","rating":4.3,"price":"$","hours":"06:30–10:30","desc":"學生早餐首選"},
@@ -35,7 +35,7 @@ places = [
 
 
 # =========================
-# LINE Webhook
+# LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -48,7 +48,7 @@ def webhook():
     msg = event["message"]["text"]
     reply_token = event["replyToken"]
 
-    # 🎡 轉盤（完全保留）
+    # 🎡 轉盤（不動）
     if msg == "美食轉盤":
         reply(reply_token, [
             {"type":"text","text":"🎡 轉盤功能"},
@@ -78,7 +78,7 @@ def webhook():
 
 
 # =========================
-# 🌍 Leaflet 地圖頁（穩定版）
+# 🌍 地圖頁（精準校園版）
 # =========================
 @app.route("/map")
 def map_page():
@@ -100,13 +100,13 @@ body{
  font-family:Arial;
 }
 
-/* 🔥 地圖（加大） */
+/* 🔥 地圖（主畫面加大） */
 #map{
- flex: 1.4;
+ flex: 1.5;
  height:100vh;
 }
 
-/* 🔥 右側卡片 */
+/* 右側卡片 */
 #panel{
  width:360px;
  overflow-y:auto;
@@ -114,7 +114,6 @@ body{
  padding:10px;
 }
 
-/* 卡片 */
 .card{
  background:white;
  margin:10px 0;
@@ -175,26 +174,45 @@ body{
 
 <script>
 
-// =========================
-// 📍 地圖（鎖定致理周邊）
-// =========================
-var map = L.map('map').setView([25.02325, 121.46745], 19);
 
-// 🔒 限制移動範圍（防亂飄）
-var bounds = [
-  [25.0208, 121.4635],
-  [25.0258, 121.4708]
-];
+
+// =========================
+// 📍 地圖初始化（🔥精準鎖致理）
+// =========================
+var map = L.map('map', {
+  center: [25.0218, 121.4636],   // ⭐ 往文化路巷弄偏移
+  zoom: 18,                      // ⭐ 巷弄級別
+  minZoom: 17,                   // ❌ 不讓縮到整個板橋
+  maxZoom: 19,                   // ❌ 不讓放太遠
+  zoomControl: true,
+  scrollWheelZoom: true
+});
+
+
+// =========================
+// 🔒 限制範圍（防亂拖）
+// =========================
+var bounds = L.latLngBounds(
+  [25.0205, 121.4618],
+  [25.0235, 121.4668]
+);
+
 map.setMaxBounds(bounds);
+map.on('drag', function () {
+  map.panInsideBounds(bounds, { animate: false });
+});
 
-// OSM
+
+// =========================
+// 🌍 地圖底圖
+// =========================
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
  attribution:''
 }).addTo(map);
 
 
 // =========================
-// 🎯 Marker（不會飄的版本）
+// 📍 icon（穩定不飄）
 // =========================
 function getIcon(type){
 
@@ -214,7 +232,7 @@ function getIcon(type){
       box-shadow:0 0 6px rgba(0,0,0,0.3);
    "></div>`,
    iconSize:[14,14],
-   iconAnchor:[7,7]   // ⭐ 關鍵（不會飄）
+   iconAnchor:[7,7]
  });
 }
 
@@ -223,8 +241,8 @@ function getIcon(type){
 // 📍 資料
 // =========================
 var places = {{ places | tojson }};
-var markers = {};
 var panel = document.getElementById("panel");
+var markers = {};
 
 
 // =========================
@@ -253,11 +271,10 @@ places.forEach(p => {
    <div class="desc">${p.desc}</div>
  `;
 
- // 🔥 卡片 → 地圖
+ // 🔥 卡片 → 地圖連動
  card.onclick = () => {
 
    map.setView([p.lat, p.lng], 19, {animate:true});
-
    marker.openPopup();
 
    document.querySelectorAll(".card")
