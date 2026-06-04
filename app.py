@@ -122,7 +122,7 @@ def webhook():
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
-        # 🍜 美食地圖
+        # 🍜 美食地圖入口
         elif msg == "美食地圖":
 
             reply(reply_token, [{
@@ -130,7 +130,7 @@ def webhook():
                 "altText": "美食地圖",
                 "template": {
                     "type": "buttons",
-                    "text": "要打開校園美食地圖嗎？",
+                    "text": "🍜 致理周邊美食地圖已準備好！",
                     "actions": [
                         {
                             "type": "uri",
@@ -154,40 +154,64 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁面
+# 🌍 地圖頁面（升級版）
 # =========================
 @app.route("/map")
 def map_page():
 
-    html_items = ""
+    categories = ["早餐", "正餐", "點心", "宵夜"]
 
-    for x in foodData:
-        html_items += f"""
-        <div style="background:white;margin:10px;padding:10px;border-radius:10px">
-            <div style="color:#ff6b6b;font-weight:bold">{x['t']}</div>
-            <h3>{x['n']}</h3>
-            <p>📍 {x['a']}</p>
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="utf-8">
+    <title>校園美食地圖</title>
+    </head>
+    <body style="margin:0;font-family:Arial;background:#f5f5f5">
+
+    <div style="background:#ff6b6b;color:white;padding:15px;text-align:center;font-size:20px">
+    🍜 致理周邊美食地圖
+    </div>
+    """
+
+    for c in categories:
+
+        html += f"""
+        <div style="margin:10px;font-size:18px;font-weight:bold;color:#333">
+        📍 {c}
         </div>
         """
 
-    return f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>校園美食地圖</title>
-</head>
-<body style="margin:0;font-family:Arial;background:#f5f5f5">
+        for x in foodData:
+            if x["t"] == c:
 
-<div style="background:#ff6b6b;color:white;padding:15px;text-align:center;font-size:20px">
-🍜 校園美食地圖
-</div>
+                maps_url = f"https://www.google.com/maps/search/{x['n']} {x['a']}"
 
-{html_items}
+                html += f"""
+                <div style="background:white;margin:10px;padding:12px;border-radius:12px;
+                            box-shadow:0 2px 6px rgba(0,0,0,0.1)">
 
-</body>
-</html>
-"""
+                    <div style="color:#ff6b6b;font-weight:bold">{x['t']}</div>
+                    <h3 style="margin:5px 0">{x['n']}</h3>
+
+                    <p style="margin:5px 0">📍 致理周邊｜{x['a']}</p>
+
+                    <a href="{maps_url}" target="_blank"
+                       style="display:inline-block;margin-top:5px;
+                              padding:6px 10px;background:#4CAF50;
+                              color:white;border-radius:6px;text-decoration:none">
+                        🚗 Google Maps 導航
+                    </a>
+                </div>
+                """
+
+    html += """
+    </body>
+    </html>
+    """
+
+    return html
 
 
 # =========================
