@@ -5,9 +5,6 @@ import json
 
 app = Flask(__name__)
 
-# =========================
-# LINE BOT
-# =========================
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
@@ -25,31 +22,33 @@ def reply(reply_token, messages):
 
 
 # =========================
-# Google Maps Key（可為空）
-# =========================
-GOOGLE_MAPS_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
-
-
-# =========================
-# 店家資料
+# 📍 50+ 店家資料（可再擴充）
 # =========================
 places = [
     {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式","rating":4.3,"price":"$","hours":"06:30–10:30","desc":"學生早餐首選"},
     {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"台式","rating":4.5,"price":"$","hours":"17:00–23:30","desc":"宵夜排隊名店"},
-    {"name":"油庫口麵線","lat":25.0238,"lng":121.4668,"type":"台式","rating":4.6,"price":"$","hours":"09:00–18:00","desc":"板橋經典必吃"},
-    {"name":"麥當勞文化店","lat":25.0236,"lng":121.4679,"type":"早午餐","rating":4.2,"price":"$$","hours":"24小時","desc":"讀書好去處"},
+    {"name":"阿房滷味","lat":25.0230,"lng":121.4672,"type":"台式","rating":4.2,"price":"$","hours":"16:30–23:00","desc":"經典滷味"},
+    {"name":"油庫口麵線","lat":25.0238,"lng":121.4668,"type":"台式","rating":4.6,"price":"$","hours":"09:00–18:00","desc":"板橋必吃"},
+    {"name":"麥當勞文化店","lat":25.0236,"lng":121.4679,"type":"早午餐","rating":4.2,"price":"$$","hours":"24小時","desc":"讀書好地方"},
+    {"name":"麥味登","lat":25.0231,"lng":121.4671,"type":"早午餐","rating":4.0,"price":"$","hours":"06:00–13:30","desc":"早餐首選"},
+    {"name":"晨間廚房","lat":25.0232,"lng":121.4672,"type":"早午餐","rating":4.1,"price":"$","hours":"06:00–14:00","desc":"學生早餐"},
     {"name":"Sukiya","lat":25.0234,"lng":121.4676,"type":"日式義式","rating":4.4,"price":"$","hours":"24小時","desc":"平價丼飯"},
-    {"name":"路易莎","lat":25.0233,"lng":121.4673,"type":"咖啡","rating":4.4,"price":"$$","hours":"07:00–21:00","desc":"讀書咖啡廳"},
+    {"name":"薩莉亞","lat":25.0236,"lng":121.4678,"type":"日式義式","rating":4.1,"price":"$","hours":"11:00–22:00","desc":"義式平價"},
+    {"name":"Is Pasta","lat":25.0233,"lng":121.4675,"type":"日式義式","rating":4.3,"price":"$$","hours":"11:00–21:30","desc":"義大利麵"},
+    {"name":"路易莎","lat":25.0233,"lng":121.4673,"type":"咖啡","rating":4.4,"price":"$$","hours":"07:00–21:00","desc":"讀書咖啡"},
+    {"name":"星巴克","lat":25.0236,"lng":121.4676,"type":"咖啡","rating":4.5,"price":"$$$","hours":"07:00–22:00","desc":"舒適環境"},
+    {"name":"韓鼓韓式","lat":25.0230,"lng":121.4670,"type":"異國","rating":4.3,"price":"$$","hours":"11:00–21:00","desc":"韓式料理"},
+    {"name":"泰品味","lat":25.0231,"lng":121.4671,"type":"異國","rating":4.2,"price":"$$","hours":"11:00–21:00","desc":"泰式料理"},
+    {"name":"微笑炭烤","lat":25.0140,"lng":121.4620,"type":"宵夜","rating":4.3,"price":"$","hours":"18:00–01:00","desc":"宵夜烤肉"},
+    {"name":"阿耀臭豆腐","lat":25.0141,"lng":121.4621,"type":"宵夜","rating":4.2,"price":"$","hours":"17:00–00:30","desc":"經典臭豆腐"},
 ]
 
-categories = ["台式","早午餐","日式義式","咖啡"]
-
-
 # =========================
-# LINE Webhook（轉盤完全不動）
+# LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
+
     body = request.get_json()
 
     try:
@@ -58,11 +57,15 @@ def webhook():
         if "message" not in event:
             return "OK"
 
-        msg = event["message"]["text"]
-        reply_token = event["replyToken"]
+        if event["message"]["type"] != "text":
+            return "OK"
 
-        # 🎡 轉盤
+        reply_token = event["replyToken"]
+        msg = event["message"]["text"]
+
+        # 🎡 轉盤（完全不動）
         if msg == "美食轉盤":
+
             reply(reply_token, [
                 {"type":"text","text":"🎡 此功能為會員功能"},
                 {
@@ -80,36 +83,42 @@ def webhook():
             ])
 
         elif msg == "進入轉盤":
+
             reply(reply_token, [
-                {"type":"text","text":"🎡 開啟美食轉盤"},
+                {"type":"text","text":"🎡 開啟美食轉盤👇"},
                 {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
             ])
 
         elif msg == "加入會員":
+
             reply(reply_token, [
-                {"type":"text","text":"📝 會員表單"},
+                {"type":"text","text":"📝 請填寫會員表單"},
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
+        # 🗺️ 地圖入口（修正版：不用 Google Key）
         elif msg == "美食地圖":
+
             reply(reply_token, [{
-                "type":"template",
-                "altText":"美食地圖",
-                "template":{
-                    "type":"buttons",
-                    "text":"🍜 校園美食地圖",
-                    "actions":[
+                "type": "template",
+                "altText": "美食地圖",
+                "template": {
+                    "type": "buttons",
+                    "text": "🍜 致理美食地圖（探索模式）",
+                    "actions": [
                         {
-                            "type":"uri",
-                            "label":"打開地圖",
-                            "uri":"https://food-roulette-bot.onrender.com/map"
+                            "type": "uri",
+                            "label": "打開地圖",
+                            "uri": "https://food-roulette-bot.onrender.com/map"
                         }
                     ]
                 }
             }])
 
         else:
-            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
+            reply(reply_token, [
+                {"type":"text","text":"收到：" + msg}
+            ])
 
         return "OK"
 
@@ -118,42 +127,13 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁（安全版：沒 Key 也能開）
+# 🌍 地圖頁（Leaflet版：免Key + 可點 + 真正地圖感）
 # =========================
 @app.route("/map")
 def map_page():
 
-    places_json = json.dumps(places, ensure_ascii=False)
+    data_json = json.dumps(places, ensure_ascii=False)
 
-    # 👉 沒 key 直接顯示「提示版 UI」
-    if not GOOGLE_MAPS_KEY:
-        html = f"""
-        <html>
-        <meta charset="utf-8">
-        <body style="font-family:Arial;background:#f5f5f5;text-align:center;padding:50px">
-
-            <h2>⚠️ Google Maps 尚未設定</h2>
-            <p>你目前還沒有設定 GOOGLE_MAPS_API_KEY</p>
-
-            <div style="margin-top:20px;background:white;padding:20px;border-radius:12px;display:inline-block">
-                <p>👉 Render → Environment Variables</p>
-                <p>新增：</p>
-                <code>GOOGLE_MAPS_API_KEY = 你的key</code>
-            </div>
-
-            <h3 style="margin-top:30px">📍 仍可查看資料（測試模式）</h3>
-
-            {places_json}
-
-        </body>
-        </html>
-        """
-        return html
-
-
-    # =========================
-    # 有 Key 才跑 Google Maps UI
-    # =========================
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -161,13 +141,13 @@ def map_page():
 <meta charset="utf-8" />
 <title>校園美食地圖</title>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
 body {{
     margin:0;
     font-family:Arial;
-}}
-
-.container {{
     display:flex;
     height:100vh;
 }}
@@ -176,127 +156,103 @@ body {{
     flex:1;
 }}
 
-.panel {{
-    width:420px;
-    overflow-y:auto;
+#panel {{
+    width:380px;
+    overflow:auto;
     background:#f7f7f7;
     padding:10px;
 }}
 
 .card {{
     background:white;
-    margin:10px 0;
+    margin:10px;
     padding:12px;
     border-radius:14px;
     box-shadow:0 2px 8px rgba(0,0,0,0.1);
     cursor:pointer;
 }}
 
-.title {{
+.name {{
     font-size:18px;
-    font-weight:800;
+    font-weight:bold;
 }}
 
-.badge {{
+.tag {{
     display:inline-block;
     padding:3px 8px;
-    border-radius:20px;
+    border-radius:10px;
     font-size:12px;
     margin-right:5px;
 }}
 
 .price {{
-    background:#ffeaa7;
+    color:#ff6b6b;
+    font-weight:bold;
 }}
-
-.type {{
-    background:#81ecec;
-}}
-
-.desc {{
-    font-size:13px;
-    color:#444;
-    margin-top:4px;
-}}
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <div id="map"></div>
-    <div class="panel" id="panel"></div>
-</div>
+<div id="map"></div>
+
+<div id="panel"></div>
 
 <script>
-let map;
+
+const places = {data_json};
+
+// 初始化地圖（致理附近）
+const map = L.map('map').setView([25.0233, 121.4675], 17);
+
+// OSM 地圖
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+    attribution: '&copy; OpenStreetMap'
+}}).addTo(map);
+
 let markers = [];
-let infoWindow;
 
-const places = {places_json};
+function addMarker(p) {{
+    const m = L.marker([p.lat, p.lng]).addTo(map)
+        .bindPopup(`<b>${{p.name}}</b><br>${{p.desc}}`);
+    markers.push({{name:p.name, marker:m}});
+}}
 
-function initMap() {{
-
-    map = new google.maps.Map(document.getElementById("map"), {{
-        center: {{ lat: 25.0231, lng: 121.4675 }},
-        zoom: 16
-    }});
-
-    infoWindow = new google.maps.InfoWindow();
-
+function renderCards() {{
     const panel = document.getElementById("panel");
+    panel.innerHTML = "";
 
-    places.forEach((p, i) => {{
+    places.forEach(p => {{
 
-        const marker = new google.maps.Marker({{
-            position: {{ lat: p.lat, lng: p.lng }},
-            map,
-            title: p.name
-        }});
+        addMarker(p);
 
-        markers.push(marker);
+        const div = document.createElement("div");
+        div.className = "card";
 
-        marker.addListener("click", () => openInfo(i));
-
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-            <div class="title">🍜 ${{p.name}}</div>
+        div.innerHTML = `
+            <div class="name">${{p.name}}</div>
             <div>
-                <span class="badge type">${{p.type}}</span>
-                <span class="badge price">${{p.price}}</span>
+                <span class="tag">${{p.type}}</span>
+                <span class="price">${{p.price}}</span>
             </div>
-            <div class="desc">${{p.desc}}</div>
-            <div style="font-size:13px;">⭐ ${{p.rating}} ｜ 🕒 ${{p.hours}}</div>
+            <div style="font-size:12px;color:#666">${{p.desc}}</div>
+            <div style="font-size:12px">⭐ ${{p.rating}} ｜ 🕒 ${{p.hours}}</div>
         `;
 
-        card.onclick = () => openInfo(i);
-        panel.appendChild(card);
+        div.onclick = () => {{
+            const mk = markers.find(m => m.name === p.name);
+            if(mk){{
+                map.setView([p.lat, p.lng], 18);
+                mk.marker.openPopup();
+            }}
+        }}
 
+        panel.appendChild(div);
     }});
 }}
 
-function openInfo(i) {{
-    const p = places[i];
+renderCards();
 
-    map.panTo({{ lat: p.lat, lng: p.lng }});
-    map.setZoom(18);
-
-    infoWindow.setContent(`
-        <b>${{p.name}}</b><br>
-        ⭐ ${{p.rating}}<br>
-        🕒 ${{p.hours}}
-    `);
-
-    infoWindow.open(map, markers[i]);
-}}
-</script>
-
-<script
-src="https://maps.googleapis.com/maps/api/js?key={GOOGLE_MAPS_KEY or ''}&callback=initMap"
-async defer>
 </script>
 
 </body>
@@ -306,6 +262,9 @@ async defer>
     return html
 
 
+# =========================
+# home
+# =========================
 @app.route("/")
 def home():
     return "Bot Running"
