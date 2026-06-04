@@ -22,22 +22,16 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 🍜 店家資料（50+安全擴充版）
+# 🍜 店家資料（致理校園版）
 # =========================
 places = [
-    {"name":"致理飯糰","lat":25.0213,"lng":121.4625,"type":"台式","rating":4.3,"price":"$","hours":"06:30–10:30","desc":"學生早餐首選"},
-    {"name":"小陳滷味","lat":25.0215,"lng":121.4630,"type":"台式","rating":4.5,"price":"$","hours":"17:00–23:30","desc":"宵夜排隊王"},
-    {"name":"油庫口麵線","lat":25.0220,"lng":121.4632,"type":"台式","rating":4.6,"price":"$","hours":"09:00–18:00","desc":"板橋必吃"},
-    {"name":"文化路早餐","lat":25.0218,"lng":121.4620,"type":"早午餐","rating":4.2,"price":"$","hours":"06:00–12:00","desc":"上課前補能量"},
-    {"name":"麥當勞文化店","lat":25.0222,"lng":121.4635,"type":"早午餐","rating":4.2,"price":"$$","hours":"24小時","desc":"讀書聖地"},
-    {"name":"Sukiya","lat":25.0225,"lng":121.4638,"type":"日式義式","rating":4.4,"price":"$","hours":"24小時","desc":"平價丼飯"},
-    {"name":"薩莉亞","lat":25.0227,"lng":121.4640,"type":"日式義式","rating":4.1,"price":"$","hours":"11:00–22:00","desc":"學生聚餐"},
-    {"name":"路易莎","lat":25.0219,"lng":121.4628,"type":"咖啡","rating":4.4,"price":"$$","hours":"07:00–21:00","desc":"讀書咖啡廳"},
-    {"name":"星巴克","lat":25.0221,"lng":121.4631,"type":"咖啡","rating":4.5,"price":"$$$","hours":"07:00–22:00","desc":"安靜空間"},
+    {"name":"致理飯糰","lat":25.0213,"lng":121.4625,"type":"台式","rating":4.3,"price":"$","desc":"學生早餐首選"},
+    {"name":"小陳滷味","lat":25.0215,"lng":121.4630,"type":"台式","rating":4.5,"price":"$","desc":"宵夜人氣王"},
+    {"name":"油庫口麵線","lat":25.0220,"lng":121.4632,"type":"台式","rating":4.6,"price":"$","desc":"板橋必吃"},
+    {"name":"麥當勞文化店","lat":25.0222,"lng":121.4635,"type":"早午餐","rating":4.2,"price":"$$","desc":"讀書聖地"},
+    {"name":"Sukiya","lat":25.0225,"lng":121.4638,"type":"日式","rating":4.4,"price":"$","desc":"平價丼飯"},
+    {"name":"路易莎","lat":25.0219,"lng":121.4628,"type":"咖啡","rating":4.4,"price":"$$","desc":"讀書咖啡廳"},
 ]
-
-categories = ["台式","早午餐","日式義式","咖啡"]
-
 
 # =========================
 # LINE webhook
@@ -56,7 +50,9 @@ def webhook():
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
-        # 🎡 轉盤（完全不動）
+        # =====================
+        # 🎡 轉盤（完整保留）
+        # =====================
         if msg == "美食轉盤":
             reply(reply_token, [
                 {"type":"text","text":"🎡 會員功能"},
@@ -65,10 +61,10 @@ def webhook():
                     "altText":"會員選擇",
                     "template":{
                         "type":"buttons",
-                        "text":"請選擇",
+                        "text":"請選擇身份",
                         "actions":[
-                            {"type":"message","label":"會員","text":"進入轉盤"},
-                            {"type":"message","label":"非會員","text":"加入會員"}
+                            {"type":"message","label":"我是會員","text":"進入轉盤"},
+                            {"type":"message","label":"我不是會員","text":"加入會員"}
                         ]
                     }
                 }
@@ -76,24 +72,26 @@ def webhook():
 
         elif msg == "進入轉盤":
             reply(reply_token, [
-                {"type":"text","text":"🎡 開啟轉盤"},
+                {"type":"text","text":"🎡 開啟美食轉盤👇"},
                 {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
             ])
 
         elif msg == "加入會員":
             reply(reply_token, [
-                {"type":"text","text":"填寫會員"},
+                {"type":"text","text":"📝 請填寫會員表單"},
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
+        # =====================
         # 🗺️ 地圖入口
+        # =====================
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type": "template",
-                "altText": "地圖",
+                "altText": "美食地圖",
                 "template": {
                     "type": "buttons",
-                    "text": "🍜 致理美食地圖",
+                    "text": "🍜 致理周邊美食地圖",
                     "actions": [
                         {
                             "type": "uri",
@@ -104,6 +102,9 @@ def webhook():
                 }
             }])
 
+        else:
+            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
+
         return "OK"
 
     except:
@@ -111,7 +112,7 @@ def webhook():
 
 
 # =========================
-# 🌍 MAP（完全修正版）
+# 🌍 MAP（穩定 Leaflet 版本）
 # =========================
 @app.route("/map")
 def map_page():
@@ -121,17 +122,15 @@ def map_page():
 <html>
 <head>
 <meta charset="utf-8">
-
 <title>致理美食地圖</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 body {{
     margin:0;
-    font-family: Arial;
+    font-family:Arial;
     display:flex;
     height:100vh;
 }}
@@ -141,15 +140,15 @@ body {{
 }}
 
 #panel {{
-    width:360px;
-    overflow-y:auto;
+    width:340px;
+    overflow:auto;
     background:#fafafa;
     padding:10px;
 }}
 
 .card {{
     background:white;
-    margin:10px 0;
+    margin:8px 0;
     padding:10px;
     border-radius:12px;
     cursor:pointer;
@@ -172,10 +171,10 @@ body {{
 <div id="map"></div>
 
 <div id="panel">
-<h2>🍜 致理美食</h2>
+<h3>🍜 致理美食地圖</h3>
 """
 
-    for i, p in enumerate(places):
+    for i,p in enumerate(places):
         html += f"""
         <div class="card" onclick="focusMarker({i})">
             <b>{p['name']}</b><br>
@@ -189,7 +188,7 @@ body {{
 
 <script>
 
-const map = L.map('map').setView([25.0218, 121.4628], 18);
+const map = L.map('map').setView([25.0213, 121.4625], 18);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -200,30 +199,30 @@ const places = """ + json.dumps(places, ensure_ascii=False) + """;
 
 let markers = [];
 
-const icons = {
-    "台式": "red",
-    "早午餐": "blue",
-    "日式義式": "green",
-    "咖啡": "orange"
+const iconColor = {
+    "台式":"red",
+    "早午餐":"blue",
+    "日式":"green",
+    "咖啡":"orange"
 };
 
 places.forEach((p, i) => {
 
     const icon = L.divIcon({
-        className: '',
-        html: `<div style="
-            width:14px;height:14px;
-            background:${icons[p.type]};
+        className:"",
+        html:`<div style="
+            width:12px;height:12px;
+            background:${iconColor[p.type] || "gray"};
             border-radius:50%;
             border:2px solid white;
             box-shadow:0 0 4px rgba(0,0,0,0.4);
         "></div>`,
-        iconSize: [14,14],
-        iconAnchor: [7,7]
+        iconSize:[12,12],
+        iconAnchor:[6,6]
     });
 
     const m = L.marker([p.lat, p.lng], {icon}).addTo(map)
-    .bindPopup(`<b>${p.name}</b><br>${p.desc}`);
+        .bindPopup(`<b>${p.name}</b><br>${p.desc}`);
 
     m.on('click', () => highlightCard(i));
 
@@ -239,7 +238,10 @@ function focusMarker(i){
 function highlightCard(i){
     document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.card')[i].classList.add('active');
-    document.querySelectorAll('.card')[i].scrollIntoView({behavior:'smooth', block:'center'});
+    document.querySelectorAll('.card')[i].scrollIntoView({
+        behavior:'smooth',
+        block:'center'
+    });
 }
 
 </script>
@@ -260,5 +262,4 @@ def home():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
