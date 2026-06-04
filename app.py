@@ -22,9 +22,10 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📌 80家店（資料不動）
+# 📌 美食資料（80家你可自行擴充）
 # =========================
 places = [
+
     {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式","rating":4.3,"reviews":120,"hours":"06:30–10:30"},
     {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"台式","rating":4.5,"reviews":210,"hours":"17:00–23:30"},
     {"name":"阿房滷味","lat":25.0230,"lng":121.4672,"type":"台式","rating":4.2,"reviews":180,"hours":"16:30–23:00"},
@@ -71,7 +72,7 @@ def webhook():
         msg = event["message"]["text"]
 
         # =========================
-        # 🎡 轉盤（⚠️完全未修改）
+        # 🎡 轉盤（❗完全不動）
         # =========================
         if msg == "美食轉盤":
 
@@ -106,7 +107,7 @@ def webhook():
             ])
 
         # =========================
-        # 🗺️ 地圖入口（只有這裡有優化）
+        # 🗺️ 地圖入口（優化UI）
         # =========================
         elif msg == "美食地圖":
 
@@ -116,11 +117,11 @@ def webhook():
                     "altText": "美食地圖",
                     "template": {
                         "type": "buttons",
-                        "text": "🍜 校園美食地圖已開啟",
+                        "text": "🗺️ 致理美食地圖已開啟",
                         "actions": [
                             {
                                 "type": "uri",
-                                "label": "📍 打開地圖",
+                                "label": "📍 開啟地圖",
                                 "uri": "https://food-roulette-bot.onrender.com/map"
                             }
                         ]
@@ -141,7 +142,7 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁（優化版）
+# 🌍 地圖頁（真正地圖App UI）
 # =========================
 @app.route("/map")
 def map_page():
@@ -157,23 +158,54 @@ def map_page():
 
     <body style="margin:0;font-family:Arial;background:#f5f5f5">
 
-    <div style="background:#ff6b6b;color:white;padding:18px;text-align:center;font-size:22px">
-        🍜 致理周邊美食地圖
-        <div style="font-size:13px">點擊即可導航（Google Maps）</div>
+    <div style="
+        background:#ff6b6b;
+        color:white;
+        padding:18px;
+        text-align:center;
+        font-size:22px;
+    ">
+        🗺️ 致理周邊美食地圖
+        <div style="font-size:13px">可滑動卡片｜點擊導航</div>
     </div>
+
+    <!-- 🔥 分類列 -->
+    <div style="
+        display:flex;
+        overflow-x:auto;
+        padding:10px;
+        background:white;
+        position:sticky;
+        top:0;
+    ">
     """
 
     for c in categories:
+        html += f"""
+        <a href="#{c}" style="
+            padding:8px 12px;
+            margin-right:8px;
+            background:#eee;
+            border-radius:20px;
+            text-decoration:none;
+            color:#333;
+            white-space:nowrap;
+        ">{c}</a>
+        """
+
+    html += "</div>"
+
+    # =========================
+    # 卡片區
+    # =========================
+    for c in categories:
 
         html += f"""
-        <div style="
-            margin:15px;
-            font-size:20px;
-            font-weight:bold;
-            color:#333;
-        ">
-        {c}
+        <div id="{c}" style="padding:15px;font-size:18px;font-weight:bold">
+            {c}
         </div>
+
+        <div style="display:flex;overflow-x:auto;padding:10px">
         """
 
         for x in places:
@@ -184,38 +216,42 @@ def map_page():
 
                 html += f"""
                 <div style="
+                    min-width:220px;
                     background:white;
-                    margin:10px 15px;
+                    margin-right:12px;
                     padding:12px;
-                    border-radius:12px;
-                    box-shadow:0 2px 6px rgba(0,0,0,0.08)
+                    border-radius:14px;
+                    box-shadow:0 3px 8px rgba(0,0,0,0.08)
                 ">
 
-                    <div style="font-size:18px;font-weight:bold">{x['name']}</div>
+                    <div style="font-weight:bold;font-size:16px">{x['name']}</div>
 
-                    <div style="color:#666;font-size:13px;margin-top:4px">
-                        ⭐ {x['rating']} ｜ {x['reviews']} 則評論
+                    <div style="font-size:12px;color:#666;margin-top:4px">
+                        ⭐ {x['rating']} ｜ {x['reviews']} 評論
                     </div>
 
-                    <div style="color:#666;font-size:13px">
+                    <div style="font-size:12px;color:#666">
                         🕒 {x['hours']}
                     </div>
 
                     <a href="{maps_url}" target="_blank"
                        style="
-                           display:inline-block;
-                           margin-top:8px;
-                           padding:6px 10px;
+                           display:block;
+                           margin-top:10px;
+                           text-align:center;
+                           padding:6px;
                            background:#4CAF50;
                            color:white;
-                           border-radius:6px;
+                           border-radius:8px;
                            text-decoration:none;
                        ">
-                       📍 Google Maps 導航
+                       📍 導航
                     </a>
 
                 </div>
                 """
+
+        html += "</div>"
 
     html += "</body></html>"
     return html
