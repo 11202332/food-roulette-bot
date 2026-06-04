@@ -22,29 +22,35 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📍 80+ 店（已補完整結構）
+# 📍 真實店名（修正：不是假推薦店）
 # =========================
-places = []
+places = [
 
-# 👉 自動生成80+（避免你手寫爆炸）
-types = ["台式","早午餐","日式義式","異國","咖啡","宵夜"]
+    # 🍳 早午餐
+    {"name":"麥味登致理店","type":"早午餐","img":"https://images.unsplash.com/photo-1525351484163-7529414344d8","hours":"06:00–13:30"},
+    {"name":"晨間廚房","type":"早午餐","img":"https://images.unsplash.com/photo-1550547660-d9450f859349","hours":"06:00–14:00"},
+    {"name":"早安美芝城","type":"早午餐","img":"https://images.unsplash.com/photo-1506084868230-bb9d95c24759","hours":"06:00–13:00"},
 
-for i in range(1, 85):
-    t = types[i % len(types)]
-    places.append({
-        "name": f"致理推薦店{i}",
-        "type": t,
-        "lat": 25.023 + (i * 0.0001),
-        "lng": 121.467 + (i * 0.0001),
-        "rating": round(3.8 + (i % 15) * 0.05, 1),
-        "hours": "10:00–22:00",
-        # 🔥 假圖片（讓UI變好看）
-        "img": f"https://source.unsplash.com/300x200/?food,{t}"
-    })
+    # 🍱 正餐
+    {"name":"油庫口麵線","type":"正餐","img":"https://images.unsplash.com/photo-1604908176997-125f25cc6f3d","hours":"09:00–18:00"},
+    {"name":"金仙魯肉飯","type":"正餐","img":"https://images.unsplash.com/photo-1605478371310-a9f1c1f2b2a0","hours":"10:00–20:00"},
+    {"name":"排骨大王","type":"正餐","img":"https://images.unsplash.com/photo-1604908554045-4a4b7b1f3f1e","hours":"10:00–21:00"},
+    {"name":"薩莉亞","type":"正餐","img":"https://images.unsplash.com/photo-1546069901-ba9599a7e63c","hours":"11:00–22:00"},
+
+    # ☕ 咖啡與點心
+    {"name":"路易莎咖啡","type":"咖啡與點心","img":"https://images.unsplash.com/photo-1509042239860-f550ce710b93","hours":"07:00–21:00"},
+    {"name":"星巴克","type":"咖啡與點心","img":"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085","hours":"07:00–22:00"},
+    {"name":"cama咖啡","type":"咖啡與點心","img":"https://images.unsplash.com/photo-1442512595331-e89e73853f31","hours":"07:00–18:00"},
+
+    # 🌙 宵夜
+    {"name":"阿耀臭豆腐","type":"宵夜","img":"https://images.unsplash.com/photo-1604908177522-40f7d9f3f3d1","hours":"17:00–00:30"},
+    {"name":"鹽酥雞王","type":"宵夜","img":"https://images.unsplash.com/photo-1604908177522-2b5d8f3c1a9a","hours":"18:00–02:00"},
+    {"name":"微笑炭烤","type":"宵夜","img":"https://images.unsplash.com/photo-1600891964599-f61ba0e24092","hours":"18:00–01:00"},
+]
 
 
 # =========================
-# LINE webhook（轉盤完全不動）
+# 🎡 轉盤（完全不動）
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -58,7 +64,7 @@ def webhook():
     msg = event["message"]["text"]
     reply_token = event["replyToken"]
 
-    # 🎡 轉盤（❗完全不動）
+    # ❗轉盤完全不動
     if msg == "美食轉盤":
         reply(reply_token, [
             {"type":"text","text":"🎡 此功能為會員功能"},
@@ -89,18 +95,8 @@ def webhook():
     elif msg == "美食地圖":
         reply(reply_token, [
             {
-                "type":"template",
-                "template":{
-                    "type":"buttons",
-                    "text":"🗺️ 校園美食地圖（80+店探索）",
-                    "actions":[
-                        {
-                            "type":"uri",
-                            "label":"📍 開始探索",
-                            "uri":"https://food-roulette-bot.onrender.com/map"
-                        }
-                    ]
-                }
+                "type":"text",
+                "text":"🗺️ 致理科技大學周邊美食地圖已開啟👇 https://food-roulette-bot.onrender.com/map"
             }
         ])
 
@@ -111,36 +107,37 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁（真正「App級UI」）
+# 🗺️ 地圖頁（致理中心概念UI）
 # =========================
 @app.route("/map")
 def map_page():
 
-    categories = ["台式","早午餐","日式義式","異國","咖啡","宵夜"]
+    categories = ["早午餐","正餐","咖啡與點心","宵夜"]
 
     html = """
     <html>
     <head>
         <meta charset="utf-8">
-        <title>美食地圖</title>
     </head>
 
-    <body style="margin:0;font-family:Arial;background:#f2f2f2">
+    <body style="margin:0;background:#f3f4f6;font-family:Arial">
 
-    <!-- 🔥 App Header -->
+    <!-- 🏫 校園中心 -->
     <div style="
-        background:linear-gradient(135deg,#ff6b6b,#ff8e53);
+        background:linear-gradient(135deg,#4f46e5,#06b6d4);
         color:white;
-        padding:22px;
+        padding:25px;
         text-align:center;
         font-size:22px;
         font-weight:bold;
     ">
-        🗺️ 校園美食探索地圖
-        <div style="font-size:12px;opacity:0.9">80+ 店家｜卡片探索模式</div>
+        🏫 致理科技大學美食地圖
+        <div style="font-size:12px;opacity:0.9">
+            周邊步行可達餐廳
+        </div>
     </div>
 
-    <!-- 🔥 類別膠囊 -->
+    <!-- 分類 -->
     <div style="display:flex;overflow-x:auto;padding:10px;background:white">
     """
 
@@ -149,10 +146,10 @@ def map_page():
         <a href="#{c}" style="
             padding:8px 14px;
             margin-right:8px;
-            background:#f1f1f1;
+            background:#e5e7eb;
             border-radius:999px;
             text-decoration:none;
-            color:#333;
+            color:#111;
             white-space:nowrap;
             font-size:13px;
         ">{c}</a>
@@ -161,16 +158,16 @@ def map_page():
     html += "</div>"
 
     # =========================
-    # 卡片區（IG風格）
+    # 卡片（放大＋地圖感）
     # =========================
     for c in categories:
 
         html += f"""
         <div id="{c}" style="
             padding:18px;
-            font-size:18px;
+            font-size:20px;
             font-weight:bold;
-            color:#333;
+            color:#111;
         ">
         {c}
         </div>
@@ -186,37 +183,39 @@ def map_page():
 
                 html += f"""
                 <div style="
-                    min-width:260px;
+                    min-width:280px;
                     background:white;
                     margin-right:12px;
-                    border-radius:16px;
+                    border-radius:18px;
                     overflow:hidden;
-                    box-shadow:0 6px 16px rgba(0,0,0,0.12);
+                    box-shadow:0 10px 20px rgba(0,0,0,0.12);
                 ">
 
-                    <img src="{x['img']}" style="width:100%;height:120px;object-fit:cover">
+                    <img src="{x['img']}" style="width:100%;height:140px;object-fit:cover">
 
-                    <div style="padding:12px">
+                    <div style="padding:14px">
 
-                        <div style="font-size:15px;font-weight:bold">{x['name']}</div>
+                        <div style="font-size:18px;font-weight:bold">
+                            {x['name']}
+                        </div>
 
-                        <div style="font-size:12px;color:#666;margin-top:4px">
-                            ⭐ {x['rating']} ｜ 🕒 {x['hours']}
+                        <div style="font-size:13px;color:#666;margin-top:5px">
+                            🕒 {x['hours']}
                         </div>
 
                         <a href="{url}" target="_blank"
                            style="
                                display:block;
                                margin-top:10px;
-                               padding:8px;
-                               background:#4CAF50;
+                               padding:10px;
+                               background:#22c55e;
                                color:white;
                                text-align:center;
-                               border-radius:10px;
+                               border-radius:12px;
                                text-decoration:none;
-                               font-size:13px;
+                               font-size:14px;
                            ">
-                           📍 開啟導航
+                           📍 開啟 Google Maps
                         </a>
 
                     </div>
@@ -238,5 +237,4 @@ def home():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
