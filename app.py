@@ -5,7 +5,7 @@ import json
 
 app = Flask(__name__)
 
-# LINE Token（Render 環境變數）
+# 🔑 LINE Token（Render Environment Variable）
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
 
 LINE_API = "https://api.line.me/v2/bot/message/reply"
@@ -15,9 +15,9 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-# ⭐ 會員清單（你之後把 userId 加進來）
+# ⭐ 會員清單（先手動放 userId）
 members = [
-    # "Uxxxxxxxxxxxxxxxxxxxx"
+    # "Uxxxxxxxxxxxxxxxxxxxxxxxx"
 ]
 
 def reply(reply_token, messages):
@@ -47,13 +47,16 @@ def webhook():
         event = body["events"][0]
 
         reply_token = event["replyToken"]
+
         msg = event["message"]["text"]
-        user_id = event["source"]["userId"]
+
+        # ⚠️ 安全取得 userId（避免偶發錯誤）
+        user_id = event["source"].get("userId")
 
         print("MSG =", msg)
         print("USER_ID =", user_id)
 
-        # 🎡 美食轉盤功能
+        # 🎡 美食轉盤
         if msg == "美食轉盤":
 
             # ✔ 會員
@@ -62,7 +65,7 @@ def webhook():
                 reply(reply_token, [
                     {
                         "type": "text",
-                        "text": "🎡 這是你的美食轉盤"
+                        "text": "🎡 會員專屬美食轉盤"
                     },
                     {
                         "type": "text",
@@ -80,11 +83,11 @@ def webhook():
                     },
                     {
                         "type": "text",
-                        "text": "📌 請加入會員才能使用轉盤"
+                        "text": "📝 請先加入會員"
                     },
                     {
                         "type": "text",
-                        "text": "📝 加入會員表單：https://forms.gle/jYykimjWcX1rgYRW8"
+                        "text": "https://forms.gle/jYykimjWcX1rgYRW8"
                     }
                 ])
 
@@ -106,7 +109,7 @@ def webhook():
 
 @app.route("/")
 def home():
-    return "Bot is running"
+    return "Bot Running"
 
 
 # 🚀 啟動
