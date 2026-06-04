@@ -22,7 +22,7 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 🍜 美食資料
+# 🍜 美食資料（你全部原始資料完整保留）
 # =========================
 foodData = [
     {"n":"吉飽早餐","a":"文化路311-19號","t":"早餐"},
@@ -87,7 +87,7 @@ def webhook():
         reply_token = event["replyToken"]
         msg = event["message"]["text"]
 
-        # 🎡 美食轉盤
+        # 🎡 轉盤（保留你原本）
         if msg == "美食轉盤":
 
             reply(reply_token, [
@@ -106,7 +106,6 @@ def webhook():
                 }
             ])
 
-        # ✔ 進入轉盤
         elif msg == "進入轉盤":
 
             reply(reply_token, [
@@ -114,7 +113,6 @@ def webhook():
                 {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
             ])
 
-        # 📝 加入會員
         elif msg == "加入會員":
 
             reply(reply_token, [
@@ -122,7 +120,7 @@ def webhook():
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
-        # 🍜 美食地圖入口
+        # 🗺️ 地圖入口
         elif msg == "美食地圖":
 
             reply(reply_token, [{
@@ -130,7 +128,7 @@ def webhook():
                 "altText": "美食地圖",
                 "template": {
                     "type": "buttons",
-                    "text": "🍜 致理周邊美食地圖已準備好！",
+                    "text": "🍜 致理周邊美食地圖已開啟",
                     "actions": [
                         {
                             "type": "uri",
@@ -154,7 +152,7 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁面（升級版）
+# 🌍 地圖頁（完整版）
 # =========================
 @app.route("/map")
 def map_page():
@@ -166,43 +164,64 @@ def map_page():
     <html>
     <head>
     <meta charset="utf-8">
-    <title>校園美食地圖</title>
+    <title>致理美食地圖</title>
     </head>
+
     <body style="margin:0;font-family:Arial;background:#f5f5f5">
 
-    <div style="background:#ff6b6b;color:white;padding:15px;text-align:center;font-size:20px">
-    🍜 致理周邊美食地圖
+    <div style="background:#ff6b6b;color:white;padding:18px;text-align:center;font-size:22px">
+        🍜 致理周邊美食地圖
+        <div style="font-size:13px;margin-top:5px">學生步行美食探索系統</div>
     </div>
     """
 
     for c in categories:
 
         html += f"""
-        <div style="margin:10px;font-size:18px;font-weight:bold;color:#333">
+        <div style="margin:12px;font-size:18px;font-weight:bold;color:#333">
         📍 {c}
         </div>
         """
 
         for x in foodData:
+
             if x["t"] == c:
 
                 maps_url = f"https://www.google.com/maps/search/{x['n']} {x['a']}"
 
                 html += f"""
-                <div style="background:white;margin:10px;padding:12px;border-radius:12px;
-                            box-shadow:0 2px 6px rgba(0,0,0,0.1)">
+                <div style="
+                    background:white;
+                    margin:10px;
+                    padding:12px;
+                    border-radius:12px;
+                    box-shadow:0 2px 6px rgba(0,0,0,0.1)
+                ">
 
-                    <div style="color:#ff6b6b;font-weight:bold">{x['t']}</div>
-                    <h3 style="margin:5px 0">{x['n']}</h3>
+                    <div style="color:#ff6b6b;font-weight:bold;font-size:13px">
+                        {x['t']}
+                    </div>
 
-                    <p style="margin:5px 0">📍 致理周邊｜{x['a']}</p>
+                    <h3 style="margin:6px 0">{x['n']}</h3>
+
+                    <p style="margin:5px 0;color:#555">
+                        📍 {x['a']}
+                    </p>
 
                     <a href="{maps_url}" target="_blank"
-                       style="display:inline-block;margin-top:5px;
-                              padding:6px 10px;background:#4CAF50;
-                              color:white;border-radius:6px;text-decoration:none">
-                        🚗 Google Maps 導航
+                       style="
+                       display:inline-block;
+                       margin-top:6px;
+                       padding:6px 10px;
+                       background:#4CAF50;
+                       color:white;
+                       border-radius:6px;
+                       text-decoration:none;
+                       font-size:13px
+                       ">
+                       🚗 Google Maps 導航
                     </a>
+
                 </div>
                 """
 
