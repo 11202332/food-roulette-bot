@@ -5,7 +5,6 @@ import json
 
 app = Flask(__name__)
 
-# 🔑 LINE Token（Render Environment Variable）
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
 
 LINE_API = "https://api.line.me/v2/bot/message/reply"
@@ -15,96 +14,105 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-# ⭐ 會員清單（先手動放 userId）
+# 👉 你先把自己設成會員（不然永遠不是會員）
 members = [
-    # "Uxxxxxxxxxxxxxxxxxxxxxxxx"
+    "Uxxxxxxxxxxxxxxxxxxxx"
 ]
 
 def reply(reply_token, messages):
-
     payload = {
         "replyToken": reply_token,
         "messages": messages
     }
 
-    res = requests.post(
-        LINE_API,
-        headers=headers,
-        data=json.dumps(payload)
-    )
-
-    print("STATUS =", res.status_code)
-    print("RESPONSE =", res.text)
+    requests.post(LINE_API, headers=headers, data=json.dumps(payload))
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
     body = request.get_json()
-    print("BODY =", body)
 
-    try:
-        event = body["events"][0]
+    event = body["events"][0]
+    reply_token = event["replyToken"]
+    msg = event["message"]["text"]
+    user_id = event["source"]["userId"]
 
-        reply_token = event["replyToken"]
+    # 🎡 按「美食轉盤」
+    if msg == "美食轉盤":
 
-        msg = event["message"]["text"]
+        reply(reply_token, [
+            {
+                "type": "text",
+                "text": "🎡 要使用美食轉盤請選擇："
+            },
+            {
+                "type": "template",
+                "altText": "會員選擇",
+                "template": {
+                    "type": "buttons",
+                    "text": "你是會員嗎？",
+                    "actions": [
+                        {
+                            "type": "message",
+                            "label": "我是會員",
+                            "text": "會員轉盤"
+                        },
+                        {
+                            "type": "message",
+                            "label": "我不是會員",
+                            "text": "非會員提示"
+                        }
+                    ]
+                }
+            }
+        ])
 
-        # ⚠️ 安全取得 userId（避免偶發錯誤）
-        user_id = event["source"].get("userId")
+    # ✔ 會員進轉盤
+    elif msg == "會員轉盤":
 
-        print("MSG =", msg)
-        print("USER_ID =", user_id)
+        if user_id in members:
 
-        # 🎡 美食轉盤
-        if msg == "美食轉盤":
-
-            # ✔ 會員
-            if user_id in members:
-
-                reply(reply_token, [
-                    {
-                        "type": "text",
-                        "text": "🎡 會員專屬美食轉盤"
-                    },
-                    {
-                        "type": "text",
-                        "text": "👉 https://cute-melomakarona-859d27.netlify.app"
-                    }
-                ])
-
-            # ❌ 非會員
-            else:
-
-                reply(reply_token, [
-                    {
-                        "type": "text",
-                        "text": "🔒 此功能為會員限定"
-                    },
-                    {
-                        "type": "text",
-                        "text": "📝 請先加入會員"
-                    },
-                    {
-                        "type": "text",
-                        "text": "https://forms.gle/jYykimjWcX1rgYRW8"
-                    }
-                ])
+            reply(reply_token, [
+                {
+                    "type": "text",
+                    "text": "🎡 這是你的美食轉盤👇"
+                },
+                {
+                    "type": "text",
+                    "text": "https://cute-melomakarona-859d27.netlify.app"
+                }
+            ])
 
         else:
 
             reply(reply_token, [
                 {
                     "type": "text",
-                    "text": f"收到：{msg}"
+                    "text": "🔒 你目前不是會員，無法使用轉盤"
                 }
             ])
 
-        return "OK"
+    # ❌ 非會員提示
+    elif msg == "非會員提示":
 
-    except Exception as e:
-        print("ERROR =", str(e))
-        return "OK"
+        reply(reply_token, [
+            {
+                "type": "text",
+                "text": "⚠️ 此功能為會員功能"
+            }
+        ])
+
+    else:
+
+        reply(reply_token, [
+            {
+                "type": "text",
+                "text": f"收到：{msg}"
+            }
+        ])
+
+    return "OK"
 
 
 @app.route("/")
@@ -112,9 +120,6 @@ def home():
     return "Bot Running"
 
 
-# 🚀 啟動
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 10000))
-
     app.run(host="0.0.0.0", port=port)
