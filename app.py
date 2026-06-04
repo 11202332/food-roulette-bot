@@ -22,7 +22,7 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📌 致理美食地圖完整資料
+# 📌 完整資料（你原本全部保留）
 # =========================
 places = [
     {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式"},
@@ -58,7 +58,7 @@ places = [
 
 
 # =========================
-# LINE webhook
+# LINE webhook（轉盤完全不動）
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -77,7 +77,7 @@ def webhook():
         reply_token = event["replyToken"]
         msg = event["message"]["text"]
 
-        # 🎡 轉盤（完全不動你原本的）
+        # 🎡 轉盤（完全保留）
         if msg == "美食轉盤":
 
             reply(reply_token, [
@@ -142,7 +142,7 @@ def webhook():
 
 
 # =========================
-# 🌍 地圖頁（已修好）
+# 🌍 地圖頁（完整資訊版）
 # =========================
 @app.route("/map")
 def map_page():
@@ -177,7 +177,7 @@ def map_page():
 
             if x["type"] == c:
 
-                maps_url = f"https://www.google.com/maps/search/{x['name']}"
+                maps_url = f"https://www.google.com/maps/search/?api=1&query={x['lat']},{x['lng']}"
 
                 html += f"""
                 <div style="
@@ -193,6 +193,10 @@ def map_page():
                     </div>
 
                     <h3 style="margin:6px 0">{x['name']}</h3>
+
+                    <p style="margin:5px 0;color:#555;font-size:13px">
+                        📍 座標：{x['lat']}, {x['lng']}
+                    </p>
 
                     <a href="{maps_url}" target="_blank"
                        style="
