@@ -22,22 +22,23 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📍 地圖資料（60+ 可繼續擴充）
+# 📍 地圖資料（可擴充 80+）
 # =========================
 places = [
-    {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"正門","rating":4.7,"price":"$","walk":2,"comment":"學生早餐首選，快速又便宜"},
-    {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"正門","rating":4.5,"price":"$","walk":3,"comment":"晚餐宵夜穩定選擇"},
-    {"name":"文化小吃","lat":25.0233,"lng":121.4674,"type":"正門","rating":4.3,"price":"$","walk":3,"comment":"傳統學生最常吃"},
-    {"name":"阿耀臭豆腐","lat":25.0230,"lng":121.4672,"type":"正門","rating":4.4,"price":"$","walk":3,"comment":"外酥內嫩超推"},
+    {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"正門","rating":4.7,"price":"$","walk":2,"comment":"學生早餐首選，便宜快速"},
+    {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"正門","rating":4.5,"price":"$","walk":3,"comment":"宵夜穩定選擇"},
+    {"name":"文化小吃","lat":25.0233,"lng":121.4674,"type":"正門","rating":4.3,"price":"$","walk":3,"comment":"經典學生餐"},
+    {"name":"阿耀臭豆腐","lat":25.0230,"lng":121.4672,"type":"正門","rating":4.4,"price":"$","walk":3,"comment":"外酥內嫩"},
     {"name":"NU PASTA","lat":25.0234,"lng":121.4678,"type":"正門","rating":4.6,"price":"$$","walk":4,"comment":"義大利麵穩定好吃"},
 
-    {"name":"海雲韓式料理","lat":25.0215,"lng":121.4656,"type":"後門","rating":4.7,"price":"$$","walk":7,"comment":"韓式料理CP值高"},
-    {"name":"韓鼓韓式料理","lat":25.0212,"lng":121.4652,"type":"後門","rating":4.5,"price":"$$","walk":6,"comment":"學生聚餐常選"},
-    {"name":"甘泉魚麵","lat":25.0211,"lng":121.4651,"type":"後門","rating":4.1,"price":"$","walk":5,"comment":"清爽湯麵代表"},
+    {"name":"海雲韓式料理","lat":25.0215,"lng":121.4656,"type":"後門","rating":4.7,"price":"$$","walk":7,"comment":"韓式CP值高"},
+    {"name":"韓鼓韓式料理","lat":25.0212,"lng":121.4652,"type":"後門","rating":4.5,"price":"$$","walk":6,"comment":"聚餐推薦"},
+    {"name":"甘泉魚麵","lat":25.0211,"lng":121.4651,"type":"後門","rating":4.1,"price":"$","walk":5,"comment":"清爽湯麵"},
 ]
 
+
 # =========================
-# LINE BOT（你的轉盤：完全保留）
+# LINE BOT（轉盤完全不動）
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -55,7 +56,7 @@ def webhook():
         reply_token = event["replyToken"]
         msg = event["message"]["text"]
 
-        # 🎡 轉盤（完全不動）
+        # 🎡 轉盤（完全保留）
         if msg == "美食轉盤":
 
             reply(reply_token, [
@@ -114,26 +115,25 @@ def webhook():
 
 
 # =========================
-# 🗺️ 高級UI/UX地圖頁（左地圖 + 右卡片）
+# 🗺️ 修復版地圖 UI（可點 + 可互動）
 # =========================
 @app.route("/map")
 def map_page():
 
-    html = f"""
+    html = """
     <html>
     <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-    body {{
+    body{
         margin:0;
         font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",Arial;
         background:#f4f6f8;
-        -webkit-text-size-adjust: 100%;
-    }}
+    }
 
-    .topbar {{
+    .topbar{
         height:60px;
         background:#ff6b6b;
         color:white;
@@ -141,76 +141,76 @@ def map_page():
         align-items:center;
         justify-content:center;
         font-weight:800;
-    }}
+    }
 
-    .container {{
+    .container{
         display:flex;
         height:calc(100vh - 60px);
-    }}
+    }
 
-    #map {{
+    #map{
         flex:2;
-    }}
+    }
 
-    .panel {{
+    .panel{
         flex:1;
         overflow:auto;
         background:white;
-    }}
+    }
 
-    .card {{
+    .card{
         margin:12px;
         padding:14px;
         border-radius:16px;
         box-shadow:0 4px 14px rgba(0,0,0,0.08);
         cursor:pointer;
-    }}
+    }
 
-    .title {{
+    .title{
         font-size:18px;
         font-weight:800;
         margin:6px 0;
-    }}
+    }
 
-    .tag-front {{
+    .tag-front{
         background:#dbeafe;
         color:#1d4ed8;
         padding:4px 10px;
         border-radius:999px;
         font-size:12px;
-    }}
+        display:inline-block;
+    }
 
-    .tag-back {{
+    .tag-back{
         background:#ffedd5;
         color:#c2410c;
         padding:4px 10px;
         border-radius:999px;
         font-size:12px;
-    }}
+        display:inline-block;
+    }
 
-    .meta {{
+    .meta{
         display:flex;
         justify-content:space-between;
         font-size:13px;
         color:#555;
         margin-top:6px;
-    }}
+    }
     </style>
     </head>
 
     <body>
 
-    <div class="topbar">🍜 致理校園美食地圖（探索模式）</div>
+    <div class="topbar">🍜 致理校園美食地圖</div>
 
     <div class="container">
 
         <div id="map"></div>
 
         <div class="panel">
-
     """
 
-    # 卡片
     for p in places:
 
         tag_class = "tag-front" if p["type"] == "正門" else "tag-back"
@@ -234,53 +234,57 @@ def map_page():
         </div>
         """
 
-    html += f"""
-
+    html += """
         </div>
     </div>
 
 <script>
 let map;
-let markers = {{}};
+let markers = {};
+let infoWindow;
 
-const places = {json.dumps(places, ensure_ascii=False)};
+const places = """ + json.dumps(places, ensure_ascii=False) + """;
 
-function initMap() {{
-    map = new google.maps.Map(document.getElementById("map"), {{
-        center: {{lat:25.023, lng:121.467}},
-        zoom: 16
-    }});
+function initMap(){
 
-    places.forEach(p => {{
-        const marker = new google.maps.Marker({{
-            position: {{lat:p.lat, lng:p.lng}},
-            map: map,
-            title: p.name
-        }});
+    map = new google.maps.Map(document.getElementById("map"), {
+        center:{lat:25.023, lng:121.467},
+        zoom:16
+    });
 
-        const info = new google.maps.InfoWindow({{
-            content: `<b>${{p.name}}</b><br>${{p.comment}}`
-        }});
+    infoWindow = new google.maps.InfoWindow();
 
-        marker.addListener("click", () => {{
-            info.open(map, marker);
-        }});
+    places.forEach(p => {
 
-        markers[p.name] = {{marker, info}};
-    }});
-}}
+        const marker = new google.maps.Marker({
+            position:{lat:p.lat, lng:p.lng},
+            map:map,
+            title:p.name
+        });
 
-function focusPlace(name) {{
-    const obj = markers[name];
-    if(!obj) return;
+        marker.addListener("click", () => {
+            infoWindow.setContent(`<b>${p.name}</b><br>${p.comment}`);
+            infoWindow.open(map, marker);
+        });
 
-    map.setCenter(obj.marker.getPosition());
+        markers[p.name] = marker;
+    });
+}
+
+function focusPlace(name){
+
+    const marker = markers[name];
+    if(!marker) return;
+
+    map.setCenter(marker.getPosition());
     map.setZoom(18);
-    obj.info.open(map, obj.marker);
-}}
+
+    infoWindow.setContent(`<b>${name}</b>`);
+    infoWindow.open(map, marker);
+}
 </script>
 
-<script async
+<script async defer
 src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
 </script>
 
