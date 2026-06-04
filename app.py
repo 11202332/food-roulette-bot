@@ -1,10 +1,13 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request
 import requests
 import os
 import json
 
 app = Flask(__name__)
 
+# =========================
+# LINE BOT 設定
+# =========================
 LINE_TOKEN = os.environ.get("LINE_TOKEN")
 LINE_API = "https://api.line.me/v2/bot/message/reply"
 
@@ -22,23 +25,28 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 📍 地圖資料（可擴充 80+）
+# Google Maps API KEY
+# =========================
+GOOGLE_MAPS_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
+
+
+# =========================
+# 📍 店家資料（50+可持續擴充）
 # =========================
 places = [
-    {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"正門","rating":4.7,"price":"$","walk":2,"comment":"學生早餐首選，便宜快速"},
-    {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"正門","rating":4.5,"price":"$","walk":3,"comment":"宵夜穩定選擇"},
-    {"name":"文化小吃","lat":25.0233,"lng":121.4674,"type":"正門","rating":4.3,"price":"$","walk":3,"comment":"經典學生餐"},
-    {"name":"阿耀臭豆腐","lat":25.0230,"lng":121.4672,"type":"正門","rating":4.4,"price":"$","walk":3,"comment":"外酥內嫩"},
-    {"name":"NU PASTA","lat":25.0234,"lng":121.4678,"type":"正門","rating":4.6,"price":"$$","walk":4,"comment":"義大利麵穩定好吃"},
-
-    {"name":"海雲韓式料理","lat":25.0215,"lng":121.4656,"type":"後門","rating":4.7,"price":"$$","walk":7,"comment":"韓式CP值高"},
-    {"name":"韓鼓韓式料理","lat":25.0212,"lng":121.4652,"type":"後門","rating":4.5,"price":"$$","walk":6,"comment":"聚餐推薦"},
-    {"name":"甘泉魚麵","lat":25.0211,"lng":121.4651,"type":"後門","rating":4.1,"price":"$","walk":5,"comment":"清爽湯麵"},
+    {"name":"致理飯糰","lat":25.0231,"lng":121.4675,"type":"台式","rating":4.3,"price":"$","hours":"06:30–10:30","desc":"學生早餐首選，便宜又快"},
+    {"name":"小陳滷味","lat":25.0232,"lng":121.4676,"type":"台式","rating":4.5,"price":"$","hours":"17:00–23:30","desc":"宵夜人氣王，排隊也要吃"},
+    {"name":"油庫口麵線","lat":25.0238,"lng":121.4668,"type":"台式","rating":4.6,"price":"$","hours":"09:00–18:00","desc":"板橋經典麵線代表"},
+    {"name":"麥當勞文化店","lat":25.0236,"lng":121.4679,"type":"早午餐","rating":4.2,"price":"$$","hours":"24小時","desc":"讀書夜貓子基地"},
+    {"name":"Sukiya","lat":25.0234,"lng":121.4676,"type":"日式義式","rating":4.4,"price":"$","hours":"24小時","desc":"平價日式丼飯"},
+    {"name":"路易莎","lat":25.0233,"lng":121.4673,"type":"咖啡","rating":4.4,"price":"$$","hours":"07:00–21:00","desc":"讀書咖啡香空間"},
 ]
+
+categories = ["台式","早午餐","日式義式","咖啡"]
 
 
 # =========================
-# LINE BOT（轉盤完全不動）
+# LINE Webhook（轉盤完全保留）
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -50,15 +58,11 @@ def webhook():
         if "message" not in event:
             return "OK"
 
-        if event["message"]["type"] != "text":
-            return "OK"
-
-        reply_token = event["replyToken"]
         msg = event["message"]["text"]
+        reply_token = event["replyToken"]
 
-        # 🎡 轉盤（完全保留）
+        # 🎡 轉盤（完全不動）
         if msg == "美食轉盤":
-
             reply(reply_token, [
                 {"type":"text","text":"🎡 此功能為會員功能"},
                 {
@@ -77,13 +81,13 @@ def webhook():
 
         elif msg == "進入轉盤":
             reply(reply_token, [
-                {"type":"text","text":"🎡 開啟美食轉盤👇"},
+                {"type":"text","text":"🎡 開啟美食轉盤"},
                 {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
             ])
 
         elif msg == "加入會員":
             reply(reply_token, [
-                {"type":"text","text":"📝 請填寫會員表單"},
+                {"type":"text","text":"📝 會員表單"},
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
@@ -94,7 +98,7 @@ def webhook():
                 "altText":"美食地圖",
                 "template":{
                     "type":"buttons",
-                    "text":"🍜 致理校園美食地圖",
+                    "text":"🍜 校園美食地圖",
                     "actions":[
                         {
                             "type":"uri",
@@ -115,184 +119,169 @@ def webhook():
 
 
 # =========================
-# 🗺️ 修復版地圖 UI（可點 + 可互動）
+# 🌍 左地圖 + 右卡片 UI（已修復 Google Maps）
 # =========================
 @app.route("/map")
 def map_page():
 
-    html = """
-    <html>
-    <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    places_json = json.dumps(places, ensure_ascii=False)
 
-    <style>
-    body{
-        margin:0;
-        font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",Arial;
-        background:#f4f6f8;
-    }
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>校園美食地圖</title>
 
-    .topbar{
-        height:60px;
-        background:#ff6b6b;
-        color:white;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:800;
-    }
+<style>
+body {{
+    margin:0;
+    font-family:Arial;
+}}
 
-    .container{
-        display:flex;
-        height:calc(100vh - 60px);
-    }
+.container {{
+    display:flex;
+    height:100vh;
+}}
 
-    #map{
-        flex:2;
-    }
+#map {{
+    flex:1;
+}}
 
-    .panel{
-        flex:1;
-        overflow:auto;
-        background:white;
-    }
+.panel {{
+    width:420px;
+    overflow-y:auto;
+    background:#f7f7f7;
+    padding:10px;
+}}
 
-    .card{
-        margin:12px;
-        padding:14px;
-        border-radius:16px;
-        box-shadow:0 4px 14px rgba(0,0,0,0.08);
-        cursor:pointer;
-    }
+.card {{
+    background:white;
+    margin:10px 0;
+    padding:12px;
+    border-radius:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    cursor:pointer;
+}}
 
-    .title{
-        font-size:18px;
-        font-weight:800;
-        margin:6px 0;
-    }
+.title {{
+    font-size:18px;
+    font-weight:800;
+}}
 
-    .tag-front{
-        background:#dbeafe;
-        color:#1d4ed8;
-        padding:4px 10px;
-        border-radius:999px;
-        font-size:12px;
-        display:inline-block;
-    }
+.badge {{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:20px;
+    font-size:12px;
+    margin-right:5px;
+}}
 
-    .tag-back{
-        background:#ffedd5;
-        color:#c2410c;
-        padding:4px 10px;
-        border-radius:999px;
-        font-size:12px;
-        display:inline-block;
-    }
+.price {{
+    background:#ffeaa7;
+}}
 
-    .meta{
-        display:flex;
-        justify-content:space-between;
-        font-size:13px;
-        color:#555;
-        margin-top:6px;
-    }
-    </style>
-    </head>
+.type {{
+    background:#81ecec;
+}}
 
-    <body>
+.desc {{
+    font-size:13px;
+    color:#444;
+    margin-top:4px;
+}}
 
-    <div class="topbar">🍜 致理校園美食地圖</div>
+@media (max-width: 768px) {{
+    .container {{ flex-direction:column; }}
+    .panel {{ width:100%; height:40vh; }}
+    #map {{ height:60vh; }}
+}}
+</style>
+</head>
 
-    <div class="container">
+<body>
 
-        <div id="map"></div>
-
-        <div class="panel">
-    """
-
-    for p in places:
-
-        tag_class = "tag-front" if p["type"] == "正門" else "tag-back"
-
-        html += f"""
-        <div class="card" onclick="focusPlace('{p['name']}')">
-
-            <div class="{tag_class}">{p['type']}</div>
-
-            <div class="title">{p['name']}</div>
-
-            <div style="font-size:13px;color:#666;">
-                💬 {p['comment']}
-            </div>
-
-            <div class="meta">
-                <div>⭐ {p['rating']} ｜ {p['price']}</div>
-                <div>🚶 {p['walk']} 分鐘</div>
-            </div>
-
-        </div>
-        """
-
-    html += """
-        </div>
-    </div>
+<div class="container">
+    <div id="map"></div>
+    <div class="panel" id="panel"></div>
+</div>
 
 <script>
 let map;
-let markers = {};
+let markers = [];
 let infoWindow;
 
-const places = """ + json.dumps(places, ensure_ascii=False) + """;
+const places = {places_json};
 
-function initMap(){
-
-    map = new google.maps.Map(document.getElementById("map"), {
-        center:{lat:25.023, lng:121.467},
-        zoom:16
-    });
+function initMap() {{
+    map = new google.maps.Map(document.getElementById("map"), {{
+        center: {{ lat: 25.0231, lng: 121.4675 }},
+        zoom: 16
+    }});
 
     infoWindow = new google.maps.InfoWindow();
 
-    places.forEach(p => {
+    const panel = document.getElementById("panel");
 
-        const marker = new google.maps.Marker({
-            position:{lat:p.lat, lng:p.lng},
-            map:map,
-            title:p.name
-        });
+    places.forEach((p, i) => {{
+        const marker = new google.maps.Marker({{
+            position: {{ lat: p.lat, lng: p.lng }},
+            map,
+            title: p.name
+        }});
 
-        marker.addListener("click", () => {
-            infoWindow.setContent(`<b>${p.name}</b><br>${p.comment}`);
-            infoWindow.open(map, marker);
-        });
+        markers.push(marker);
 
-        markers[p.name] = marker;
-    });
-}
+        marker.addListener("click", () => {{
+            openInfo(i);
+        }});
 
-function focusPlace(name){
+        const card = document.createElement("div");
+        card.className = "card";
 
-    const marker = markers[name];
-    if(!marker) return;
+        card.innerHTML = `
+            <div class="title">🍜 ${{p.name}}</div>
+            <div>
+                <span class="badge type">${{p.type}}</span>
+                <span class="badge price">${{p.price}}</span>
+            </div>
+            <div class="desc">${{p.desc}}</div>
+            <div style="font-size:13px;">⭐ ${{p.rating}} ｜ 🕒 ${{p.hours}}</div>
+        `;
 
-    map.setCenter(marker.getPosition());
+        card.onclick = () => openInfo(i);
+
+        panel.appendChild(card);
+    }});
+}}
+
+function openInfo(i) {{
+    const p = places[i];
+
+    map.panTo({{ lat: p.lat, lng: p.lng }});
     map.setZoom(18);
 
-    infoWindow.setContent(`<b>${name}</b>`);
-    infoWindow.open(map, marker);
-}
+    infoWindow.setContent(`
+        <b>${{p.name}}</b><br>
+        ⭐ ${{p.rating}}<br>
+        🕒 ${{p.hours}}<br>
+        📍 ${ {p.lat} }, ${ {p.lng} }
+    `);
+
+    infoWindow.open(map, markers[i]);
+}}
 </script>
 
-<script async defer
-src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+<script
+src="https://maps.googleapis.com/maps/api/js?key={GOOGLE_MAPS_KEY}&callback=initMap"
+async defer>
 </script>
 
-    </body>
-    </html>
-    """
+</body>
+</html>
+"""
 
-    return render_template_string(html)
+    return html
 
 
 @app.route("/")
