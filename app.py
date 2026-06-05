@@ -21,6 +21,9 @@ def reply(reply_token, messages):
     requests.post(LINE_API, headers=headers, data=json.dumps(payload))
 
 
+# =========================
+# 店家資料
+# =========================
 places = [
 {"name":"栄次郎燒肉","rating":4.7,"price":"$200-400","type":"燒肉","area":"文化","comment":"肉香很爽但荷包會痛"},
 {"name":"FlagPasta","rating":4.5,"price":"$200-400","type":"義大利麵","area":"陽明","comment":"穩定不踩雷"},
@@ -39,6 +42,9 @@ places = [
 ]
 
 
+# =========================
+# LINE webhook（會員判斷）
+# =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
     body = request.get_json()
@@ -48,12 +54,30 @@ def webhook():
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
+        # 🎡 美食轉盤 → 會員判斷
         if msg == "美食轉盤":
-            reply(reply_token, [
-                {"type":"text","text":"🎡 美食轉盤"},
-                {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
-            ])
+            reply(reply_token, [{
+                "type":"template",
+                "altText":"會員驗證",
+                "template":{
+                    "type":"buttons",
+                    "text":"你是會員嗎？",
+                    "actions":[
+                        {
+                            "type":"uri",
+                            "label":"我是會員（開轉盤）",
+                            "uri":"https://cute-melomakarona-859d27.netlify.app"
+                        },
+                        {
+                            "type":"uri",
+                            "label":"我不是會員（填表單）",
+                            "uri":"https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
+                        }
+                    ]
+                }
+            }])
 
+        # 🗺️ 地圖
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type":"template",
@@ -78,191 +102,3 @@ def webhook():
 
     except:
         return "OK"
-
-
-@app.route("/map")
-def map_page():
-
-    html = """
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>致理美食地圖</title>
-
-<style>
-body{
-    margin:0;
-    font-family:Arial;
-    background:#f7f3ea;
-}
-
-/* 🔥 改成 RWD 主容器 */
-.container{
-    display:flex;
-    height:100vh;
-}
-
-/* 左側清單 */
-#panel{
-    width:340px;
-    background:#fff8ee;
-    padding:12px;
-    overflow:auto;
-}
-
-/* 卡片 */
-.card{
-    background:linear-gradient(135deg,#fff,#fff7ee);
-    margin:8px 0;
-    padding:10px;
-    border-radius:14px;
-    box-shadow:0 3px 10px rgba(0,0,0,0.08);
-}
-
-/* 地圖 */
-#map{
-    flex:1;
-    position:relative;
-    background:#f1eadf;
-}
-
-/* 中心 */
-.center{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:white;
-    padding:6px 12px;
-    border-radius:10px;
-    font-weight:bold;
-    color:#c0392b;
-}
-
-/* 路 */
-.roadV,.roadH{
-    position:absolute;
-    background:#cdb79e;
-    opacity:0.4;
-}
-.roadV{width:6px;height:100%;left:50%;}
-.roadH{height:6px;width:100%;top:50%;}
-
-/* 店家點 */
-.food{
-    position:absolute;
-    transform:translate(-50%,-50%);
-    text-align:center;
-}
-
-.pin{
-    width:12px;height:12px;
-    border-radius:50%;
-    border:2px solid white;
-    margin:auto;
-}
-
-.label{
-    font-size:10px;
-    background:white;
-    padding:2px 6px;
-    border-radius:8px;
-}
-
-/* 顏色 */
-.red{background:#ff6b6b;}
-.green{background:#51cf66;}
-.blue{background:#4dabf7;}
-.brown{background:#d9a066;}
-
-
-/* 🔥🔥手機版直接變上下 */
-@media (max-width: 768px){
-
-    .container{
-        flex-direction:column;
-    }
-
-    #panel{
-        width:100%;
-        height:40vh;
-    }
-
-    #map{
-        height:60vh;
-    }
-}
-</style>
-
-</head>
-
-<body>
-
-<div class="container">
-
-<div id="panel">
-<h3>🍜 致理美食清單</h3>
-"""
-
-    for p in places:
-        html += f"""
-        <div class="card">
-            <b>{p['name']}</b><br>
-            ⭐ {p['rating']} | {p['price']}<br>
-            📍 {p['comment']}
-        </div>
-        """
-
-    html += """
-</div>
-
-<div id="map">
-
-<div class="roadV"></div>
-<div class="roadH"></div>
-
-<div class="center">🎓 致理科技大學</div>
-"""
-
-    for i, p in enumerate(places):
-
-        if p["type"] in ["早餐"]:
-            color="green"
-        elif p["type"] in ["燒肉","台菜","韓式"]:
-            color="red"
-        elif p["type"] in ["咖啡","健康"]:
-            color="blue"
-        else:
-            color="brown"
-
-        top = 20 + (i % 6) * 10
-        left = 20 + (i % 5) * 15
-
-        html += f"""
-        <div class="food {color}" style="top:{top}%;left:{left}%;">
-            <div class="pin"></div>
-            <div class="label">{p['name']}</div>
-        </div>
-        """
-
-    html += """
-</div>
-
-</div>
-
-</body>
-</html>
-"""
-
-    return render_template_string(html)
-
-
-@app.route("/")
-def home():
-    return "Bot Running"
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
