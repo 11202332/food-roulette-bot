@@ -2,6 +2,7 @@ from flask import Flask, request, render_template_string
 import requests
 import os
 import json
+import random
 
 app = Flask(__name__)
 
@@ -10,15 +11,28 @@ LINE_API = "https://api.line.me/v2/bot/message/reply"
 
 headers = {
     "Content-Type": "application/json",
-    "Authorization": f"Bearer {LINE_TOKEN}"
+    "Authorization": f"Bearer {LINE_TOKEN}" if LINE_TOKEN else ""
 }
 
+
+# =========================
+# 安全 reply（不會炸）
+# =========================
 def reply(reply_token, messages):
     payload = {
         "replyToken": reply_token,
         "messages": messages
     }
-    requests.post(LINE_API, headers=headers, data=json.dumps(payload))
+
+    try:
+        requests.post(
+            LINE_API,
+            headers=headers,
+            data=json.dumps(payload),
+            timeout=5
+        )
+    except Exception as e:
+        print("reply error:", e)
 
 
 # =========================
@@ -43,35 +57,35 @@ places = [
 
 
 # =========================
-# LINE webhook（會員判斷）
+# LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    body = request.get_json()
-
     try:
+        body = request.get_json()
+
         event = body["events"][0]
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
-        # 🎡 美食轉盤 → 會員判斷
+        # 🎡 轉盤（會員判斷）
         if msg == "美食轉盤":
             reply(reply_token, [{
-                "type":"template",
-                "altText":"會員驗證",
-                "template":{
-                    "type":"buttons",
-                    "text":"你是會員嗎？",
-                    "actions":[
+                "type": "template",
+                "altText": "會員系統",
+                "template": {
+                    "type": "buttons",
+                    "text": "你是會員嗎？",
+                    "actions": [
                         {
-                            "type":"uri",
-                            "label":"我是會員（開轉盤）",
-                            "uri":"https://cute-melomakarona-859d27.netlify.app"
+                            "type": "uri",
+                            "label": "我是會員（開轉盤）",
+                            "uri": "https://cute-melomakarona-859d27.netlify.app"
                         },
                         {
-                            "type":"uri",
-                            "label":"我不是會員（填表單）",
-                            "uri":"https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
+                            "type": "uri",
+                            "label": "我不是會員（填表單）",
+                            "uri": "https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
                         }
                     ]
                 }
@@ -80,25 +94,198 @@ def webhook():
         # 🗺️ 地圖
         elif msg == "美食地圖":
             reply(reply_token, [{
-                "type":"template",
-                "altText":"美食地圖",
-                "template":{
-                    "type":"buttons",
-                    "text":"致理手繪美食地圖",
-                    "actions":[
-                        {
-                            "type":"uri",
-                            "label":"打開地圖",
-                            "uri":"https://food-roulette-bot.onrender.com/map"
-                        }
-                    ]
-                }
+                "type": "text",
+                "text": "🗺️ 地圖連結：https://food-roulette-bot.onrender.com/map"
             }])
 
         else:
-            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
+            reply(reply_token, [{
+                "type": "text",
+                "text": "收到：" + msg
+            }])
 
         return "OK"
 
-    except:
+    except Exception as e:
+        print("webhook error:", e)
         return "OK"
+
+
+# =========================
+# 🗺️ 地圖（手機不卡版）
+# =========================
+@app.route("/map")
+def map_page():
+
+    html = """
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>致理美食地圖</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f7f3ea;
+}
+
+/* 左右結構 */
+.container{
+    display:flex;
+    height:100vh;
+}
+
+/* 清單 */
+#panel{
+    width:320px;
+    background:#fff8ee;
+    padding:10px;
+    overflow:auto;
+}
+
+.card{
+    background:#fff;
+    margin:8px 0;
+    padding:10px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* 地圖 */
+#map{
+    flex:1;
+    position:relative;
+    background:#f1eadf;
+}
+
+.center{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    padding:6px 12px;
+    border-radius:10px;
+    font-weight:bold;
+    color:#c0392b;
+}
+
+/* 點 */
+.food{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    text-align:center;
+}
+
+.pin{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    border:2px solid white;
+    margin:auto;
+}
+
+.label{
+    font-size:10px;
+    background:white;
+    padding:2px 5px;
+    border-radius:8px;
+}
+
+/* 顏色 */
+.red{background:#ff6b6b;}
+.green{background:#51cf66;}
+.blue{background:#4dabf7;}
+.brown{background:#d9a066;}
+
+
+/* 📱 手機版 */
+@media (max-width:768px){
+    .container{
+        flex-direction:column;
+    }
+
+    #panel{
+        width:100%;
+        height:40vh;
+    }
+
+    #map{
+        height:60vh;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="panel">
+<h3>🍜 致理美食</h3>
+"""
+
+    for p in places:
+        html += f"""
+        <div class="card">
+            <b>{p['name']}</b><br>
+            ⭐ {p['rating']} | {p['price']}<br>
+            📍 {p['comment']}
+        </div>
+        """
+
+    html += """
+</div>
+
+<div id="map">
+<div class="center">🎓 致理科技大學</div>
+"""
+
+    # 🔥 改成 random（避免全部擠在一起）
+    for i, p in enumerate(places):
+
+        if p["type"] in ["早餐"]:
+            color = "green"
+        elif p["type"] in ["燒肉","台菜","韓式"]:
+            color = "red"
+        elif p["type"] in ["咖啡","健康"]:
+            color = "blue"
+        else:
+            color = "brown"
+
+        random.seed(i)
+        top = random.randint(10, 85)
+        left = random.randint(10, 85)
+
+        html += f"""
+        <div class="food {color}" style="top:{top}%;left:{left}%;">
+            <div class="pin"></div>
+            <div class="label">{p['name']}</div>
+        </div>
+        """
+
+    html += """
+</div>
+
+</div>
+
+</body>
+</html>
+"""
+
+    return render_template_string(html)
+
+
+# =========================
+# home
+# =========================
+@app.route("/")
+def home():
+    return "Bot Running"
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
