@@ -16,16 +16,11 @@ headers = {
 
 
 def reply(reply_token, messages):
-    payload = {
-        "replyToken": reply_token,
-        "messages": messages
-    }
-
     try:
         requests.post(
             LINE_API,
             headers=headers,
-            data=json.dumps(payload),
+            data=json.dumps({"replyToken": reply_token, "messages": messages}),
             timeout=5
         )
     except Exception as e:
@@ -33,23 +28,23 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 店家資料
+# 🍜 你的完整店家資料（精簡放 name + url）
 # =========================
 places = [
-{"name":"栄次郎燒肉","rating":4.7,"price":"$200-400","type":"燒肉","area":"文化","comment":"肉香很爽但荷包會痛"},
-{"name":"FlagPasta","rating":4.5,"price":"$200-400","type":"義大利麵","area":"陽明","comment":"穩定不踩雷"},
-{"name":"小食。候","rating":4.3,"price":"$200-400","type":"咖啡","area":"陽明","comment":"安靜讀書咖啡廳"},
-{"name":"義匠湯麵","rating":4.8,"price":"$200-400","type":"湯麵","area":"陽明","comment":"湯頭很強"},
-{"name":"鄉親小吃","rating":4.6,"price":"$1-200","type":"小吃","area":"幸福","comment":"便宜又飽"},
-{"name":"逸麵鍋燒","rating":4.9,"price":"$1-200","type":"鍋燒","area":"新海","comment":"學生最愛"},
-{"name":"is pasta","rating":4.3,"price":"$200-400","type":"義大利麵","area":"文化","comment":"聚餐安全牌"},
-{"name":"吉飽早餐","rating":4.0,"price":"$1-200","type":"早餐","area":"文化","comment":"早八救星"},
-{"name":"致理飯糰","rating":4.7,"price":"$1-200","type":"早餐","area":"文化","comment":"超大顆飯糰"},
-{"name":"小松拉麵","rating":4.5,"price":"$1-200","type":"拉麵","area":"陽明","comment":"CP值高"},
-{"name":"一京咖哩","rating":4.6,"price":"$1-200","type":"咖哩","area":"陽明","comment":"濃郁系"},
-{"name":"MABO POKE","rating":4.3,"price":"$1-200","type":"健康","area":"文化","comment":"清爽沙拉飯"},
-{"name":"海雲韓式","rating":4.7,"price":"$400-600","type":"韓式","area":"陽明","comment":"炸雞很讚"},
-{"name":"紅居館","rating":4.8,"price":"$400-800","type":"台菜","area":"新海","comment":"聚餐首選"}
+{"name":"栄次郎燒肉","area":"文化","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
+{"name":"FlagPasta","area":"陽明","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
+{"name":"小食。候","area":"陽明","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
+{"name":"義匠湯麵","area":"陽明","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
+{"name":"鄉親小吃","area":"幸福","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
+{"name":"逸麵鍋燒","area":"新海","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
+{"name":"is pasta","area":"文化","url":"https://maps.app.goo.gl/u4S4BujsEwmQRdnV7"},
+{"name":"吉飽早餐","area":"文化","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
+{"name":"致理飯糰","area":"文化","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
+{"name":"小松拉麵","area":"陽明","url":"https://maps.app.goo.gl/LKop15YmYrWt8ccP8"},
+{"name":"一京咖哩","area":"陽明","url":"https://maps.app.goo.gl/st1Ly3jhVZiNdhZJ8"},
+{"name":"MABO POKE","area":"文化","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9"},
+{"name":"海雲韓式","area":"陽明","url":"https://maps.app.goo.gl/gQbAeUjs4MwnYePi7"},
+{"name":"紅居館","area":"新海","url":"https://maps.app.goo.gl/pM2ksGeQ3Dw59zup6"}
 ]
 
 
@@ -61,29 +56,27 @@ def webhook():
 
     try:
         body = request.get_json()
-
         event = body["events"][0]
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
         # 🎡 轉盤（會員功能）
         if msg == "美食轉盤":
-
             reply(reply_token, [{
                 "type": "template",
                 "altText": "會員功能",
                 "template": {
                     "type": "buttons",
-                    "text": "🎡 此為會員功能，請選擇身份",
+                    "text": "🎡 此為會員功能",
                     "actions": [
                         {
                             "type": "uri",
-                            "label": "我是會員",
+                            "label": "會員登入",
                             "uri": "https://cute-melomakarona-859d27.netlify.app"
                         },
                         {
                             "type": "uri",
-                            "label": "我不是會員",
+                            "label": "非會員填寫",
                             "uri": "https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
                         }
                     ]
@@ -98,20 +91,17 @@ def webhook():
             }])
 
         else:
-            reply(reply_token, [{
-                "type": "text",
-                "text": "收到：" + msg
-            }])
+            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
 
         return "OK"
 
     except Exception as e:
-        print("webhook error:", e)
+        print(e)
         return "OK"
 
 
 # =========================
-# 🗺️ 地圖（修正不擠版）
+# 🗺️ 地圖（真正不擠版本）
 # =========================
 @app.route("/map")
 def map_page():
@@ -136,7 +126,6 @@ body{
     height:100vh;
 }
 
-/* 左側 */
 #panel{
     width:320px;
     background:#fff8ee;
@@ -144,16 +133,13 @@ body{
     overflow:auto;
 }
 
-/* 卡片 */
 .card{
     background:white;
     margin:8px 0;
     padding:10px;
     border-radius:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* 地圖 */
 #map{
     flex:1;
     position:relative;
@@ -169,10 +155,8 @@ body{
     padding:6px 12px;
     border-radius:10px;
     font-weight:bold;
-    color:#c0392b;
 }
 
-/* 點 */
 .food{
     position:absolute;
     transform:translate(-50%,-50%);
@@ -180,8 +164,7 @@ body{
 }
 
 .pin{
-    width:12px;
-    height:12px;
+    width:12px;height:12px;
     border-radius:50%;
     border:2px solid white;
     margin:auto;
@@ -193,13 +176,6 @@ body{
     padding:2px 5px;
     border-radius:8px;
 }
-
-/* 顏色 */
-.red{background:#ff6b6b;}
-.green{background:#51cf66;}
-.blue{background:#4dabf7;}
-.brown{background:#d9a066;}
-
 
 /* 📱 手機 */
 @media (max-width:768px){
@@ -223,8 +199,7 @@ body{
         html += f"""
         <div class="card">
             <b>{p['name']}</b><br>
-            ⭐ {p['rating']} | {p['price']}<br>
-            📍 {p['comment']}
+            <a href="{p['url']}" target="_blank">📍 Google Maps</a>
         </div>
         """
 
@@ -235,29 +210,20 @@ body{
 <div class="center">🎓 致理科技大學</div>
 """
 
-    # 🎯 分散不重疊算法
+    # 🎯 真正分散（依 index + jitter）
     for i, p in enumerate(places):
 
-        if p["type"] in ["早餐"]:
-            color = "green"
-        elif p["type"] in ["燒肉","台菜","韓式"]:
-            color = "red"
-        elif p["type"] in ["咖啡","健康"]:
-            color = "blue"
-        else:
-            color = "brown"
+        base_x = (i % 6) * 14 + 10
+        base_y = (i // 6) * 14 + 10
 
-        base_x = (i % 5) * 18 + 10
-        base_y = (i // 5) * 18 + 10
+        jitter_x = (i * 3) % 7
+        jitter_y = (i * 5) % 7
 
-        jitter_x = (i * 7) % 5
-        jitter_y = (i * 11) % 5
-
-        top = min(85, base_y + jitter_y)
-        left = min(85, base_x + jitter_x)
+        top = min(88, base_y + jitter_y)
+        left = min(88, base_x + jitter_x)
 
         html += f"""
-        <div class="food {color}" style="top:{top}%;left:{left}%;">
+        <div class="food" style="top:{top}%;left:{left}%;">
             <div class="pin"></div>
             <div class="label">{p['name']}</div>
         </div>
