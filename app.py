@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template_string
-import requests, os, json
+import requests
+import os
+import json
 
 app = Flask(__name__)
 
@@ -11,39 +13,32 @@ headers = {
     "Authorization": f"Bearer {LINE_TOKEN}"
 }
 
-def reply(token, messages):
-    requests.post(LINE_API, headers=headers, data=json.dumps({
-        "replyToken": token,
+def reply(reply_token, messages):
+    payload = {
+        "replyToken": reply_token,
         "messages": messages
-    }))
+    }
+    requests.post(LINE_API, headers=headers, data=json.dumps(payload))
 
 
-# =========================
-# ⭐ 會員系統（超簡版）
-# =========================
-members = set()  # 存 userId
-
-
-# =========================
-# 🍜 店家資料
-# =========================
 places = [
-{"name":"栄次郎燒肉","area":"文化路","rating":"4.7","price":"$200-400","comment":"個人燒肉很熱門","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
-{"name":"FlagPasta","area":"陽明街","rating":"4.5","price":"$200-400","comment":"學生愛店","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
-{"name":"小食。候","area":"陽明街","rating":"4.3","price":"$200-400","comment":"文青咖啡","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
-{"name":"義匠湯麵","area":"陽明街","rating":"4.8","price":"$200-400","comment":"義式湯麵","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
-{"name":"鄉親小吃","area":"幸福路","rating":"4.6","price":"$1-200","comment":"平價小吃","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
-{"name":"逸麵鍋燒","area":"新海路","rating":"4.9","price":"$1-200","comment":"學生最推","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
-{"name":"致理飯糰","area":"文化路","rating":"4.7","price":"$1-200","comment":"早餐人氣","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
-{"name":"吉飽早餐","area":"文化路","rating":"4.0","price":"$1-200","comment":"便宜早餐","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
-{"name":"MABO POKE","area":"文化路","rating":"4.3","price":"$1-200","comment":"健康餐","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9"},
-{"name":"海雲韓式","area":"自由路","rating":"4.7","price":"$400-600","comment":"韓式料理","url":"https://maps.app.goo.gl/gQbAeUjs4MwnYePi7"},
+{"name":"栄次郎燒肉","rating":4.7,"price":"$200-400","type":"燒肉","area":"文化","comment":"肉香很爽但荷包會痛"},
+{"name":"FlagPasta","rating":4.5,"price":"$200-400","type":"義大利麵","area":"陽明","comment":"穩定不踩雷"},
+{"name":"小食。候","rating":4.3,"price":"$200-400","type":"咖啡","area":"陽明","comment":"安靜讀書咖啡廳"},
+{"name":"義匠湯麵","rating":4.8,"price":"$200-400","type":"湯麵","area":"陽明","comment":"湯頭很強"},
+{"name":"鄉親小吃","rating":4.6,"price":"$1-200","type":"小吃","area":"幸福","comment":"便宜又飽"},
+{"name":"逸麵鍋燒","rating":4.9,"price":"$1-200","type":"鍋燒","area":"新海","comment":"學生最愛"},
+{"name":"is pasta","rating":4.3,"price":"$200-400","type":"義大利麵","area":"文化","comment":"聚餐安全牌"},
+{"name":"吉飽早餐","rating":4.0,"price":"$1-200","type":"早餐","area":"文化","comment":"早八救星"},
+{"name":"致理飯糰","rating":4.7,"price":"$1-200","type":"早餐","area":"文化","comment":"超大顆飯糰"},
+{"name":"小松拉麵","rating":4.5,"price":"$1-200","type":"拉麵","area":"陽明","comment":"CP值高"},
+{"name":"一京咖哩","rating":4.6,"price":"$1-200","type":"咖哩","area":"陽明","comment":"濃郁系"},
+{"name":"MABO POKE","rating":4.3,"price":"$1-200","type":"健康","area":"文化","comment":"清爽沙拉飯"},
+{"name":"海雲韓式","rating":4.7,"price":"$400-600","type":"韓式","area":"陽明","comment":"炸雞很讚"},
+{"name":"紅居館","rating":4.8,"price":"$400-800","type":"台菜","area":"新海","comment":"聚餐首選"}
 ]
 
 
-# =========================
-# LINE webhook
-# =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
     body = request.get_json()
@@ -51,53 +46,33 @@ def webhook():
     try:
         event = body["events"][0]
         msg = event["message"]["text"]
-        token = event["replyToken"]
-        user_id = event["source"]["userId"]
+        reply_token = event["replyToken"]
 
-        # =========================
-        # 🎡 轉盤（會員檢查）
-        # =========================
         if msg == "美食轉盤":
+            reply(reply_token, [
+                {"type":"text","text":"🎡 美食轉盤"},
+                {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
+            ])
 
-            if user_id in members:
-                reply(token, [
-                    {"type":"text","text":"🎡 轉盤開啟"},
-                    {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
-                ])
-            else:
-                reply(token, [
-                    {"type":"text","text":"⚠️ 你還不是會員"},
-                    {"type":"text","text":"請先填寫表單加入會員👇"},
-                    {"type":"text","text":"https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"}
-                ])
-
-        # =========================
-        # 🧾 加入會員指令（你可以測試用）
-        # =========================
-        elif msg == "加入會員":
-            members.add(user_id)
-            reply(token,[{"type":"text","text":"✅ 已加入會員（測試用）"}])
-
-        # =========================
-        # 🗺️ 地圖
-        # =========================
         elif msg == "美食地圖":
-            reply(token, [{
+            reply(reply_token, [{
                 "type":"template",
                 "altText":"美食地圖",
                 "template":{
                     "type":"buttons",
-                    "text":"致理美食地圖",
-                    "actions":[{
-                        "type":"uri",
-                        "label":"打開地圖",
-                        "uri":"https://food-roulette-bot.onrender.com/map"
-                    }]
+                    "text":"致理手繪美食地圖",
+                    "actions":[
+                        {
+                            "type":"uri",
+                            "label":"打開地圖",
+                            "uri":"https://food-roulette-bot.onrender.com/map"
+                        }
+                    ]
                 }
             }])
 
         else:
-            reply(token,[{"type":"text","text":"收到：" + msg}])
+            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
 
         return "OK"
 
@@ -105,9 +80,6 @@ def webhook():
         return "OK"
 
 
-# =========================
-# 🗺️ 地圖頁
-# =========================
 @app.route("/map")
 def map_page():
 
@@ -120,81 +92,126 @@ def map_page():
 <title>致理美食地圖</title>
 
 <style>
-body{margin:0;font-family:Arial;display:flex;}
-
-@media(max-width:768px){
- body{flex-direction:column;}
- #panel{width:100%!important;height:45vh;}
- #map{height:55vh;}
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f7f3ea;
 }
 
+/* 🔥 改成 RWD 主容器 */
+.container{
+    display:flex;
+    height:100vh;
+}
+
+/* 左側清單 */
 #panel{
- width:340px;
- background:#fff8ee;
- padding:12px;
- overflow:auto;
+    width:340px;
+    background:#fff8ee;
+    padding:12px;
+    overflow:auto;
 }
 
+/* 卡片 */
 .card{
- background:white;
- margin:10px 0;
- padding:10px;
- border-radius:12px;
- box-shadow:0 2px 6px rgba(0,0,0,0.08);
+    background:linear-gradient(135deg,#fff,#fff7ee);
+    margin:8px 0;
+    padding:10px;
+    border-radius:14px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.08);
 }
 
+/* 地圖 */
 #map{
- flex:1;
- position:relative;
- background:#f3e3cc;
+    flex:1;
+    position:relative;
+    background:#f1eadf;
 }
 
+/* 中心 */
 .center{
- position:absolute;
- top:50%;left:50%;
- transform:translate(-50%,-50%);
- background:white;
- padding:10px;
- border-radius:12px;
- font-weight:bold;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    padding:6px 12px;
+    border-radius:10px;
+    font-weight:bold;
+    color:#c0392b;
 }
 
-.shop{
- position:absolute;
- transform:translate(-50%,-50%);
- text-align:center;
+/* 路 */
+.roadV,.roadH{
+    position:absolute;
+    background:#cdb79e;
+    opacity:0.4;
+}
+.roadV{width:6px;height:100%;left:50%;}
+.roadH{height:6px;width:100%;top:50%;}
+
+/* 店家點 */
+.food{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    text-align:center;
 }
 
-.dot{
- width:12px;height:12px;
- background:#ff4d4d;
- border-radius:50%;
- border:2px solid white;
+.pin{
+    width:12px;height:12px;
+    border-radius:50%;
+    border:2px solid white;
+    margin:auto;
 }
 
 .label{
- font-size:10px;
- background:white;
- padding:2px 5px;
- border-radius:6px;
- white-space:nowrap;
+    font-size:10px;
+    background:white;
+    padding:2px 6px;
+    border-radius:8px;
+}
+
+/* 顏色 */
+.red{background:#ff6b6b;}
+.green{background:#51cf66;}
+.blue{background:#4dabf7;}
+.brown{background:#d9a066;}
+
+
+/* 🔥🔥手機版直接變上下 */
+@media (max-width: 768px){
+
+    .container{
+        flex-direction:column;
+    }
+
+    #panel{
+        width:100%;
+        height:40vh;
+    }
+
+    #map{
+        height:60vh;
+    }
 }
 </style>
+
 </head>
 
 <body>
 
+<div class="container">
+
 <div id="panel">
-<h3>🍜 美食清單</h3>
+<h3>🍜 致理美食清單</h3>
 """
 
     for p in places:
         html += f"""
         <div class="card">
             <b>{p['name']}</b><br>
-            ⭐ {p['rating']} ｜ 💰 {p['price']}<br>
-            💬 {p['comment']}<br>
-            <a href="{p['url']}" target="_blank">📍 MAP</a>
+            ⭐ {p['rating']} | {p['price']}<br>
+            📍 {p['comment']}
         </div>
         """
 
@@ -202,34 +219,39 @@ body{margin:0;font-family:Arial;display:flex;}
 </div>
 
 <div id="map">
+
+<div class="roadV"></div>
+<div class="roadH"></div>
+
 <div class="center">🎓 致理科技大學</div>
 """
 
     for i, p in enumerate(places):
 
-        base = {
-            "文化路": (40, 60),
-            "陽明街": (35, 80),
-            "新海路": (75, 55),
-            "幸福路": (80, 30),
-            "自由路": (55, 85)
-        }
+        if p["type"] in ["早餐"]:
+            color="green"
+        elif p["type"] in ["燒肉","台菜","韓式"]:
+            color="red"
+        elif p["type"] in ["咖啡","健康"]:
+            color="blue"
+        else:
+            color="brown"
 
-        top, left = base.get(p["area"], (50,50))
-        top += (i % 3) * 4
-        left += (i % 2) * 4
+        top = 20 + (i % 6) * 10
+        left = 20 + (i % 5) * 15
 
         html += f"""
-        <a href="{p['url']}" target="_blank">
-        <div class="shop" style="top:{top}%;left:{left}%;">
-            <div class="dot"></div>
+        <div class="food {color}" style="top:{top}%;left:{left}%;">
+            <div class="pin"></div>
             <div class="label">{p['name']}</div>
         </div>
-        </a>
         """
 
     html += """
 </div>
+
+</div>
+
 </body>
 </html>
 """
