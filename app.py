@@ -23,24 +23,28 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 🍜 店家
+# 🍜 店家資料
 # =========================
 places = [
-{"name":"栄次郎個人燒肉","rating":4.7,"price":"$200-400","area":"文化"},
+{"name":"栄次郎燒肉","rating":4.7,"price":"$200-400","area":"文化"},
 {"name":"FlagPasta","rating":4.5,"price":"$200-400","area":"陽明"},
 {"name":"小食。候","rating":4.3,"price":"$200-400","area":"陽明"},
-{"name":"義匠義式湯麵","rating":4.8,"price":"$200-400","area":"陽明"},
+{"name":"義匠湯麵","rating":4.8,"price":"$200-400","area":"陽明"},
 {"name":"鄉親小吃","rating":4.6,"price":"$1-200","area":"幸福"},
 {"name":"逸麵鍋燒","rating":4.9,"price":"$1-200","area":"新海"},
 {"name":"is pasta","rating":4.3,"price":"$200-400","area":"文化"},
 {"name":"吉飽早餐","rating":4.0,"price":"$1-200","area":"文化"},
 {"name":"致理飯糰","rating":4.7,"price":"$1-200","area":"文化"},
 {"name":"小松拉麵","rating":4.5,"price":"$1-200","area":"陽明"},
+{"name":"一京咖哩","rating":4.6,"price":"$1-200","area":"陽明"},
+{"name":"MABO POKE","rating":4.3,"price":"$1-200","area":"文化"},
+{"name":"海雲韓式","rating":4.7,"price":"$400-600","area":"陽明"},
+{"name":"紅居館","rating":4.8,"price":"$400-800","area":"新海"}
 ]
 
 
 # =========================
-# LINE webhook（🔥轉盤還在這）
+# LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -52,14 +56,14 @@ def webhook():
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
-        # 🎡 轉盤（你原本的功能回來）
+        # 🎡 轉盤（完整保留）
         if msg == "美食轉盤":
             reply(reply_token, [
-                {"type":"text","text":"🎡 美食轉盤開啟！"},
+                {"type":"text","text":"🎡 美食轉盤開啟"},
                 {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
             ])
 
-        # 🗺️ 地圖
+        # 🗺️ 地圖入口
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type":"template",
@@ -87,7 +91,7 @@ def webhook():
 
 
 # =========================
-# 🗺️ 手繪地圖（保留清單 + 地圖）
+# 🗺️ 手繪地圖（核心）
 # =========================
 @app.route("/map")
 def map_page():
@@ -107,7 +111,7 @@ body{
     font-family:Arial;
 }
 
-/* 左清單（保留） */
+/* 左清單 */
 #panel{
     width:320px;
     background:#fff8ee;
@@ -130,7 +134,7 @@ body{
     background:#f3efe6;
 }
 
-/* 中心 */
+/* 致理中心 */
 .center{
     position:absolute;
     top:50%;
@@ -143,17 +147,39 @@ body{
     color:#c0392b;
 }
 
-/* 區域 */
-.zone{
+/* 十字街道 */
+.roadV{
     position:absolute;
+    width:6px;
+    height:100%;
+    left:50%;
+    background:#d6c6a5;
+    transform:translateX(-50%);
+    opacity:0.4;
+}
+
+.roadH{
+    position:absolute;
+    height:6px;
+    width:100%;
+    top:50%;
+    background:#d6c6a5;
+    transform:translateY(-50%);
+    opacity:0.4;
+}
+
+/* 標示街道 */
+.street{
+    position:absolute;
+    font-size:13px;
     font-weight:bold;
     color:#555;
 }
 
-.culture{ top:20%; left:50%; }
-.yangming{ top:50%; left:80%; }
-.xinhai{ top:80%; left:50%; }
-.happy{ top:50%; left:20%; }
+.culture{ top:10%; left:48%; }
+.yangming{ top:50%; right:5%; }
+.xinhai{ bottom:10%; left:48%; }
+.happy{ top:50%; left:5%; }
 
 /* 店家 */
 .shop{
@@ -167,8 +193,8 @@ body{
     height:12px;
     background:#ff6b6b;
     border-radius:50%;
-    margin:auto;
     border:2px solid white;
+    margin:auto;
 }
 
 .label{
@@ -201,16 +227,19 @@ body{
 
 <div id="map">
 
+<div class="roadV"></div>
+<div class="roadH"></div>
+
 <div class="center">🎓 致理科技大學</div>
 
-<div class="zone culture">文化路</div>
-<div class="zone yangming">陽明街</div>
-<div class="zone xinhai">新海路</div>
-<div class="zone happy">幸福路</div>
+<div class="street culture">文化路</div>
+<div class="street yangming">陽明街</div>
+<div class="street xinhai">新海路</div>
+<div class="street happy">幸福路</div>
 """
 
     # =========================
-    # 🎯 手繪分布（穩定版）
+    # 🧭 重點：手繪分布（穩定版）
     # =========================
     for i, p in enumerate(places):
 
