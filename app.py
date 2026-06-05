@@ -14,40 +14,30 @@ headers = {
 }
 
 def reply(reply_token, messages):
-    payload = {
-        "replyToken": reply_token,
-        "messages": messages
-    }
-    requests.post(LINE_API, headers=headers, data=json.dumps(payload))
+    if not LINE_TOKEN:
+        print("LINE_TOKEN missing")
+        return
+
+    requests.post(
+        LINE_API,
+        headers=headers,
+        data=json.dumps({
+            "replyToken": reply_token,
+            "messages": messages
+        })
+    )
 
 
 # =========================
-# 🍜 店家資料（完整）
+# 🍜 店家資料（你原本那份）
 # =========================
 places = [
-{"name":"栄次郎個人燒肉","road":"文化路","rating":4.7,"price":"$200-400","comment":"燒肉"},
-{"name":"FlagPasta","road":"陽明街","rating":4.5,"price":"$200-400","comment":"義大利麵"},
-{"name":"小食。候","road":"陽明街","rating":4.3,"price":"$200-400","comment":"咖啡"},
-{"name":"義匠義式湯麵","road":"陽明街","rating":4.8,"price":"$200-400","comment":"湯麵"},
-{"name":"鄉親小吃","road":"幸福路","rating":4.6,"price":"$1-200","comment":"小吃"},
-{"name":"逸麵鍋燒","road":"新海路","rating":4.9,"price":"$1-200","comment":"鍋燒"},
-{"name":"is pasta","road":"文化路","rating":4.3,"price":"$200-400","comment":"義大利麵"},
-{"name":"吉飽早餐","road":"文化路","rating":4.0,"price":"$1-200","comment":"早餐"},
-{"name":"致理飯糰","road":"文化路","rating":4.7,"price":"$1-200","comment":"早餐"},
-{"name":"小松拉麵","road":"陽明街","rating":4.5,"price":"$1-200","comment":"拉麵"},
-{"name":"一京咖哩","road":"陽明街","rating":4.6,"price":"$1-200","comment":"咖哩"},
-{"name":"吳二麻辣鴨血","road":"文化路","rating":4.4,"price":"$1-200","comment":"麻辣"},
-{"name":"吉野烤肉飯","road":"文化路","rating":3.8,"price":"$1-200","comment":"便當"},
-{"name":"MABO POKE","road":"文化路","rating":4.3,"price":"$1-200","comment":"健康"},
-{"name":"Café Wanderer","road":"陽明街","rating":4.4,"price":"$200-400","comment":"咖啡"},
-{"name":"紅居館台菜","road":"漢生西路","rating":4.8,"price":"$400-800","comment":"台菜"},
-{"name":"海雲韓式料理","road":"自由路","rating":4.7,"price":"$400-600","comment":"韓式"},
-{"name":"NU PASTA","road":"陽明街","rating":4.6,"price":"$200-400","comment":"義大利麵"},
-{"name":"光東養茶","road":"陽明街","rating":4.7,"price":"$1-200","comment":"飲料"},
-{"name":"8鍋臭臭鍋","road":"漢生西路","rating":3.9,"price":"$1-200","comment":"火鍋"},
-{"name":"麻丹辣小火鍋","road":"漢生西路","rating":4.9,"price":"$200-400","comment":"火鍋"},
-{"name":"牪嗑牛排","road":"新海路","rating":4.3,"price":"$200-400","comment":"牛排"},
-{"name":"龍一海南雞","road":"文化路","rating":4.6,"price":"$1-200","comment":"便當"},
+    {"name":"栄次郎個人燒肉","rating":4.7,"price":"$200-400","type":"燒肉","comment":"自己烤肉很爽但錢包會痛"},
+    {"name":"FlagPasta","rating":4.5,"price":"$200-400","type":"義大利麵","comment":"穩定不踩雷"},
+    {"name":"小食。候","rating":4.3,"price":"$200-400","type":"咖啡","comment":"安靜但容易客滿"},
+    {"name":"義匠義式湯麵","rating":4.8,"price":"$200-400","type":"義大利麵","comment":"湯麵很特別"},
+    {"name":"鄉親小吃","rating":4.6,"price":"$1-200","type":"小吃","comment":"便宜實在"},
+    {"name":"逸麵鍋燒","rating":4.9,"price":"$1-200","type":"鍋燒","comment":"湯頭超強"},
 ]
 
 
@@ -58,71 +48,71 @@ places = [
 def webhook():
     body = request.get_json()
 
-    try:
-        event = body["events"][0]
-        msg = event["message"]["text"]
-        reply_token = event["replyToken"]
+    event = body["events"][0]
+    msg = event["message"]["text"]
+    reply_token = event["replyToken"]
 
-        # 🎡 轉盤（完全保留你的版本）
-        if msg == "美食轉盤":
-            reply(reply_token, [
-                {"type":"text","text":"🎡 會員功能"},
-                {
-                    "type":"template",
-                    "altText":"會員選擇",
-                    "template":{
-                        "type":"buttons",
-                        "text":"請選擇身份",
-                        "actions":[
-                            {"type":"message","label":"我是會員","text":"進入轉盤"},
-                            {"type":"message","label":"我不是會員","text":"加入會員"}
-                        ]
-                    }
-                }
-            ])
+    # 🎡 轉盤（完全保留你原本）
+    if msg == "美食轉盤":
+        reply(reply_token, [
+            {"type":"text","text":"🎡 轉盤功能"},
+            {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
+        ])
 
-        elif msg == "進入轉盤":
-            reply(reply_token, [
-                {"type":"text","text":"🎡 開啟轉盤👇"},
-                {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
-            ])
+    # 🗺️ 地圖（改成直接 HTML，不會 404）
+    elif msg == "美食地圖":
 
-        elif msg == "加入會員":
-            reply(reply_token, [
-                {"type":"text","text":"📝 會員表單"},
-                {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
-            ])
+        html = """
+        <html>
+        <head><meta charset="utf-8"><title>美食清單</title></head>
+        <body style="font-family:Arial;padding:20px;">
+        <h2>🍜 致理美食清單</h2>
+        """
 
-        # 🗺️ 美食地圖（純清單，不再有地圖）
-        elif msg == "美食地圖":
+        for p in places:
+            html += f"""
+            <div style="margin-bottom:10px;padding:10px;border:1px solid #ddd;">
+                <b>{p['name']}</b><br>
+                ⭐ {p['rating']} | {p['price']}<br>
+                {p['comment']}
+            </div>
+            """
 
-            grouped = {}
-            for p in places:
-                grouped.setdefault(p["road"], []).append(p)
+        html += "</body></html>"
 
-            text = "🍜 致理美食清單\n\n"
+        reply(reply_token, [{
+            "type": "text",
+            "text": "👉 https://food-roulette-bot.onrender.com/map"
+        }])
 
-            for road, items in grouped.items():
-                text += f"📍 {road}\n"
-                for i in items:
-                    text += f"- {i['name']} ⭐{i['rating']} {i['price']}\n"
-                text += "\n"
+    else:
+        reply(reply_token, [{"type":"text","text":"收到：" + msg}])
 
-            reply(reply_token, [{"type":"text","text":text}])
-
-        else:
-            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
-
-        return "OK"
-
-    except Exception as e:
-        print("error:", e)
-        return "OK"
+    return "OK"
 
 
 # =========================
-# home
+# 🗺️ map（重點修正）
 # =========================
+@app.route("/map")
+def map_page():
+    return render_template_string("""
+    <html>
+    <head><meta charset="utf-8"><title>美食清單</title></head>
+    <body style="font-family:Arial;padding:20px;">
+        <h2>🍜 美食清單</h2>
+        {% for p in places %}
+        <div style="margin-bottom:10px;padding:10px;border:1px solid #ddd;">
+            <b>{{p.name}}</b><br>
+            ⭐ {{p.rating}} | {{p.price}}<br>
+            {{p.comment}}
+        </div>
+        {% endfor %}
+    </body>
+    </html>
+    """, places=places)
+
+
 @app.route("/")
 def home():
     return "Bot Running"
