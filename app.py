@@ -19,24 +19,30 @@ def reply(token, messages):
 
 
 # =========================
-# 🍜 完整店家（含連結）
+# ⭐ 會員系統（超簡版）
+# =========================
+members = set()  # 存 userId
+
+
+# =========================
+# 🍜 店家資料
 # =========================
 places = [
-{"name":"栄次郎燒肉","area":"文化路","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
-{"name":"FlagPasta","area":"陽明街","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
-{"name":"小食。候","area":"陽明街","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
-{"name":"義匠湯麵","area":"陽明街","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
-{"name":"鄉親小吃","area":"幸福路","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
-{"name":"逸麵鍋燒","area":"新海路","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
-{"name":"致理飯糰","area":"文化路","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
-{"name":"吉飽早餐","area":"文化路","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
-{"name":"MABO POKE","area":"文化路","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9"},
-{"name":"海雲韓式","area":"自由路","url":"https://maps.app.goo.gl/gQbAeUjs4MwnYePi7"},
+{"name":"栄次郎燒肉","area":"文化路","rating":"4.7","price":"$200-400","comment":"個人燒肉很熱門","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
+{"name":"FlagPasta","area":"陽明街","rating":"4.5","price":"$200-400","comment":"學生愛店","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
+{"name":"小食。候","area":"陽明街","rating":"4.3","price":"$200-400","comment":"文青咖啡","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
+{"name":"義匠湯麵","area":"陽明街","rating":"4.8","price":"$200-400","comment":"義式湯麵","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
+{"name":"鄉親小吃","area":"幸福路","rating":"4.6","price":"$1-200","comment":"平價小吃","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
+{"name":"逸麵鍋燒","area":"新海路","rating":"4.9","price":"$1-200","comment":"學生最推","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
+{"name":"致理飯糰","area":"文化路","rating":"4.7","price":"$1-200","comment":"早餐人氣","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
+{"name":"吉飽早餐","area":"文化路","rating":"4.0","price":"$1-200","comment":"便宜早餐","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
+{"name":"MABO POKE","area":"文化路","rating":"4.3","price":"$1-200","comment":"健康餐","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9"},
+{"name":"海雲韓式","area":"自由路","rating":"4.7","price":"$400-600","comment":"韓式料理","url":"https://maps.app.goo.gl/gQbAeUjs4MwnYePi7"},
 ]
 
 
 # =========================
-# LINE webhook（轉盤完全不動）
+# LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -46,15 +52,35 @@ def webhook():
         event = body["events"][0]
         msg = event["message"]["text"]
         token = event["replyToken"]
+        user_id = event["source"]["userId"]
 
-        # 🎡 轉盤（100%不動）
+        # =========================
+        # 🎡 轉盤（會員檢查）
+        # =========================
         if msg == "美食轉盤":
-            reply(token, [
-                {"type":"text","text":"🎡 轉盤開啟"},
-                {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
-            ])
 
+            if user_id in members:
+                reply(token, [
+                    {"type":"text","text":"🎡 轉盤開啟"},
+                    {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
+                ])
+            else:
+                reply(token, [
+                    {"type":"text","text":"⚠️ 你還不是會員"},
+                    {"type":"text","text":"請先填寫表單加入會員👇"},
+                    {"type":"text","text":"https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"}
+                ])
+
+        # =========================
+        # 🧾 加入會員指令（你可以測試用）
+        # =========================
+        elif msg == "加入會員":
+            members.add(user_id)
+            reply(token,[{"type":"text","text":"✅ 已加入會員（測試用）"}])
+
+        # =========================
         # 🗺️ 地圖
+        # =========================
         elif msg == "美食地圖":
             reply(token, [{
                 "type":"template",
@@ -74,12 +100,13 @@ def webhook():
             reply(token,[{"type":"text","text":"收到：" + msg}])
 
         return "OK"
+
     except:
         return "OK"
 
 
 # =========================
-# 🗺️ 真正「看得懂版本」
+# 🗺️ 地圖頁
 # =========================
 @app.route("/map")
 def map_page():
@@ -93,91 +120,64 @@ def map_page():
 <title>致理美食地圖</title>
 
 <style>
-body{
-    margin:0;
-    display:flex;
-    height:100vh;
-    font-family:Arial;
+body{margin:0;font-family:Arial;display:flex;}
+
+@media(max-width:768px){
+ body{flex-direction:column;}
+ #panel{width:100%!important;height:45vh;}
+ #map{height:55vh;}
 }
 
-/* 左邊清單（保留 + 可點） */
 #panel{
-    width:340px;
-    background:#fff8ee;
-    padding:12px;
-    overflow:auto;
+ width:340px;
+ background:#fff8ee;
+ padding:12px;
+ overflow:auto;
 }
 
 .card{
-    background:white;
-    margin:8px 0;
-    padding:10px;
-    border-radius:12px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.08);
+ background:white;
+ margin:10px 0;
+ padding:10px;
+ border-radius:12px;
+ box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
-.card a{
-    text-decoration:none;
-    color:#333;
-}
-
-/* 右邊地圖 */
 #map{
-    flex:1;
-    position:relative;
-    background:#f2e6d3;
+ flex:1;
+ position:relative;
+ background:#f3e3cc;
 }
 
-/* 致理中心 */
 .center{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:white;
-    padding:10px 14px;
-    border-radius:12px;
-    font-weight:bold;
-    box-shadow:0 2px 8px rgba(0,0,0,0.2);
+ position:absolute;
+ top:50%;left:50%;
+ transform:translate(-50%,-50%);
+ background:white;
+ padding:10px;
+ border-radius:12px;
+ font-weight:bold;
 }
 
-/* 四個方向（重點：讓人看懂） */
-.zone{
-    position:absolute;
-    font-weight:bold;
-    font-size:13px;
-    background:rgba(255,255,255,0.7);
-    padding:4px 8px;
-    border-radius:8px;
-}
-
-.north{top:5%;left:50%;transform:translateX(-50%);}
-.south{bottom:5%;left:50%;transform:translateX(-50%);}
-.east{top:50%;right:5%;}
-.west{top:50%;left:5%;}
-
-/* 店家點 */
 .shop{
-    position:absolute;
-    transform:translate(-50%,-50%);
-    text-align:center;
+ position:absolute;
+ transform:translate(-50%,-50%);
+ text-align:center;
 }
 
 .dot{
-    width:12px;
-    height:12px;
-    background:#ff4d4d;
-    border-radius:50%;
-    border:2px solid white;
-    margin:auto;
+ width:12px;height:12px;
+ background:#ff4d4d;
+ border-radius:50%;
+ border:2px solid white;
 }
 
 .label{
-    font-size:10px;
-    background:white;
-    padding:2px 5px;
-    border-radius:6px;
-    white-space:nowrap;
+ font-size:10px;
+ background:white;
+ padding:2px 5px;
+ border-radius:6px;
+ white-space:nowrap;
 }
 </style>
 </head>
@@ -185,19 +185,16 @@ body{
 <body>
 
 <div id="panel">
-<h3>🍜 致理美食清單</h3>
+<h3>🍜 美食清單</h3>
 """
 
-    # =========================
-    # 左側：可點 Google Maps（你要的）
-    # =========================
     for p in places:
         html += f"""
         <div class="card">
-            <a href="{p['url']}" target="_blank">
-                <b>{p['name']}</b><br>
-                📍 {p['area']}
-            </a>
+            <b>{p['name']}</b><br>
+            ⭐ {p['rating']} ｜ 💰 {p['price']}<br>
+            💬 {p['comment']}<br>
+            <a href="{p['url']}" target="_blank">📍 MAP</a>
         </div>
         """
 
@@ -205,49 +202,34 @@ body{
 </div>
 
 <div id="map">
-
 <div class="center">🎓 致理科技大學</div>
-
-<div class="zone north">北｜早餐區</div>
-<div class="zone south">南｜小吃區</div>
-<div class="zone east">東｜文化路</div>
-<div class="zone west">西｜陽明街</div>
 """
 
-    # =========================
-    # 右邊：真正「固定邏輯定位」
-    # =========================
     for i, p in enumerate(places):
 
-        if p["area"] == "文化路":
-            top = 40 + (i % 4) * 5
-            left = 70 + (i % 2) * 5
+        base = {
+            "文化路": (40, 60),
+            "陽明街": (35, 80),
+            "新海路": (75, 55),
+            "幸福路": (80, 30),
+            "自由路": (55, 85)
+        }
 
-        elif p["area"] == "陽明街":
-            top = 35 + (i % 4) * 5
-            left = 75
-
-        elif p["area"] == "新海路":
-            top = 75
-            left = 55 + (i % 3) * 5
-
-        elif p["area"] == "幸福路":
-            top = 80
-            left = 30 + (i % 3) * 5
-
-        else:
-            top, left = 50, 50
+        top, left = base.get(p["area"], (50,50))
+        top += (i % 3) * 4
+        left += (i % 2) * 4
 
         html += f"""
+        <a href="{p['url']}" target="_blank">
         <div class="shop" style="top:{top}%;left:{left}%;">
             <div class="dot"></div>
             <div class="label">{p['name']}</div>
         </div>
+        </a>
         """
 
     html += """
 </div>
-
 </body>
 </html>
 """
