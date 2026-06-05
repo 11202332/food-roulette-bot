@@ -31,7 +31,7 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 🍜 完整店家資料
+# 🍜 店家資料
 # =========================
 places = [
     {"name":"栄次郎個人燒肉","area":"文化路","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
@@ -104,7 +104,7 @@ def webhook():
     if not reply_token:
         return "OK"
 
-    # 🎡 轉盤（不動）
+    # 🎡 轉盤（完全原版，不改）
     if msg == "美食轉盤":
         reply(reply_token, [{
             "type": "template",
@@ -128,11 +128,10 @@ def webhook():
             }
         }])
 
-    # 🍜 地圖 → 改清單（不再用 map page）
+    # 🍜 地圖 → 清單（已移除 map 頁面）
     elif msg == "美食地圖":
 
         grouped = {}
-
         for p in places:
             grouped.setdefault(p["area"], []).append(p)
 
@@ -154,7 +153,7 @@ def webhook():
 
 
 # =========================
-# 🎡 轉盤
+# 🎡 轉盤（原版）
 # =========================
 @app.route("/roulette")
 def roulette():
@@ -169,6 +168,7 @@ def roulette():
     </head>
 
     <body style="text-align:center;font-family:Arial;background:#fff3e6;">
+
         <h2>🎡 美食轉盤</h2>
 
         <p id="result">點擊開始</p>
@@ -183,6 +183,7 @@ def roulette():
             document.getElementById("result").innerText = "👉 " + pick;
         }
         </script>
+
     </body>
     </html>
     """ % json.dumps(names, ensure_ascii=False)
@@ -190,9 +191,6 @@ def roulette():
     return render_template_string(html)
 
 
-# =========================
-# 🏠 home
-# =========================
 @app.route("/")
 def home():
     return "Bot Running"
