@@ -64,37 +64,12 @@ def webhook():
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
-        # 🎡 轉盤
         if msg == "美食轉盤":
-            reply(reply_token, [
-                {"type":"text","text":"🎡 會員功能"},
-                {
-                    "type":"template",
-                    "altText":"會員選擇",
-                    "template":{
-                        "type":"buttons",
-                        "text":"請選擇身份",
-                        "actions":[
-                            {"type":"message","label":"我是會員","text":"進入轉盤"},
-                            {"type":"message","label":"我不是會員","text":"加入會員"}
-                        ]
-                    }
-                }
-            ])
-
-        elif msg == "進入轉盤":
             reply(reply_token, [
                 {"type":"text","text":"🎡 開啟轉盤👇"},
                 {"type":"text","text":"https://cute-melomakarona-859d27.netlify.app"}
             ])
 
-        elif msg == "加入會員":
-            reply(reply_token, [
-                {"type":"text","text":"📝 會員表單"},
-                {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
-            ])
-
-        # 🗺️ 地圖
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type":"template",
@@ -122,7 +97,7 @@ def webhook():
 
 
 # =========================
-# 🗺️ 手繪美食地圖（你要的版本）
+# 🗺️ 手繪地圖（致理為中心版本）
 # =========================
 @app.route("/map")
 def map_page():
@@ -158,27 +133,26 @@ body{
     box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
-/* 右側手繪地圖 */
+/* 右側地圖 */
 #map{
     flex:1;
     position:relative;
     background:#f5efe6;
 }
 
-/* 區域 */
-.zone{
+/* 致理中心點 */
+.center{
     position:absolute;
-    font-size:16px;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:14px;
     font-weight:bold;
-    color:#6b4f3a;
-    background:rgba(255,255,255,0.7);
-    padding:4px 10px;
-    border-radius:10px;
+    color:#d35400;
+    background:white;
+    padding:6px 10px;
+    border-radius:12px;
 }
-
-.z1{top:10%;left:15%;}
-.z2{top:45%;left:30%;}
-.z3{top:75%;left:45%;}
 
 /* 店家 */
 .shop{
@@ -226,25 +200,32 @@ body{
 
 <div id="map">
 
-<div class="zone z1">文化路</div>
-<div class="zone z2">陽明街</div>
-<div class="zone z3">新海路</div>
+<div class="center">🎓 致理科技大學</div>
 """
 
-    # 固定分區（乾淨版）
+    # =========================
+    # 📍 真正「以校為中心」分布
+    # =========================
     for i, p in enumerate(places):
 
-        zone = i % 3
+        # 用類別分方向（比亂數合理）
+        direction = i % 4
 
-        if zone == 0:
-            top = 15 + (i % 8) * 6
-            left = 15 + (i % 5) * 6
-        elif zone == 1:
-            top = 45 + (i % 8) * 5
-            left = 30 + (i % 5) * 6
-        else:
-            top = 70 + (i % 8) * 4
-            left = 45 + (i % 5) * 6
+        if direction == 0:      # 上（北）
+            top = 20 + (i * 2 % 20)
+            left = 50 + (i % 5 - 2) * 5
+
+        elif direction == 1:    # 右（東）
+            top = 50 + (i % 5 - 2) * 5
+            left = 70 + (i * 2 % 15)
+
+        elif direction == 2:    # 下（南）
+            top = 75 + (i * 2 % 15)
+            left = 50 + (i % 5 - 2) * 5
+
+        else:                   # 左（西）
+            top = 50 + (i % 5 - 2) * 5
+            left = 20 + (i * 2 % 15)
 
         html += f"""
         <div class="shop" style="top:{top}%;left:{left}%;">
