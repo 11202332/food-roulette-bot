@@ -15,9 +15,6 @@ headers = {
 }
 
 
-# =========================
-# 安全 reply（不會炸）
-# =========================
 def reply(reply_token, messages):
     payload = {
         "replyToken": reply_token,
@@ -61,6 +58,7 @@ places = [
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
+
     try:
         body = request.get_json()
 
@@ -68,23 +66,24 @@ def webhook():
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
-        # 🎡 轉盤（會員判斷）
+        # 🎡 轉盤（會員功能）
         if msg == "美食轉盤":
+
             reply(reply_token, [{
                 "type": "template",
-                "altText": "會員系統",
+                "altText": "會員功能",
                 "template": {
                     "type": "buttons",
-                    "text": "你是會員嗎？",
+                    "text": "🎡 此為會員功能，請選擇身份",
                     "actions": [
                         {
                             "type": "uri",
-                            "label": "我是會員（開轉盤）",
+                            "label": "我是會員",
                             "uri": "https://cute-melomakarona-859d27.netlify.app"
                         },
                         {
                             "type": "uri",
-                            "label": "我不是會員（填表單）",
+                            "label": "我不是會員",
                             "uri": "https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
                         }
                     ]
@@ -95,7 +94,7 @@ def webhook():
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type": "text",
-                "text": "🗺️ 地圖連結：https://food-roulette-bot.onrender.com/map"
+                "text": "🗺️ 地圖：https://food-roulette-bot.onrender.com/map"
             }])
 
         else:
@@ -112,7 +111,7 @@ def webhook():
 
 
 # =========================
-# 🗺️ 地圖（手機不卡版）
+# 🗺️ 地圖（修正不擠版）
 # =========================
 @app.route("/map")
 def map_page():
@@ -132,13 +131,12 @@ body{
     background:#f7f3ea;
 }
 
-/* 左右結構 */
 .container{
     display:flex;
     height:100vh;
 }
 
-/* 清單 */
+/* 左側 */
 #panel{
     width:320px;
     background:#fff8ee;
@@ -146,8 +144,9 @@ body{
     overflow:auto;
 }
 
+/* 卡片 */
 .card{
-    background:#fff;
+    background:white;
     margin:8px 0;
     padding:10px;
     border-radius:12px;
@@ -202,22 +201,14 @@ body{
 .brown{background:#d9a066;}
 
 
-/* 📱 手機版 */
+/* 📱 手機 */
 @media (max-width:768px){
-    .container{
-        flex-direction:column;
-    }
-
-    #panel{
-        width:100%;
-        height:40vh;
-    }
-
-    #map{
-        height:60vh;
-    }
+    .container{flex-direction:column;}
+    #panel{width:100%;height:40vh;}
+    #map{height:60vh;}
 }
 </style>
+
 </head>
 
 <body>
@@ -244,7 +235,7 @@ body{
 <div class="center">🎓 致理科技大學</div>
 """
 
-    # 🔥 改成 random（避免全部擠在一起）
+    # 🎯 分散不重疊算法
     for i, p in enumerate(places):
 
         if p["type"] in ["早餐"]:
@@ -256,9 +247,14 @@ body{
         else:
             color = "brown"
 
-        random.seed(i)
-        top = random.randint(10, 85)
-        left = random.randint(10, 85)
+        base_x = (i % 5) * 18 + 10
+        base_y = (i // 5) * 18 + 10
+
+        jitter_x = (i * 7) % 5
+        jitter_y = (i * 11) % 5
+
+        top = min(85, base_y + jitter_y)
+        left = min(85, base_x + jitter_x)
 
         html += f"""
         <div class="food {color}" style="top:{top}%;left:{left}%;">
@@ -279,9 +275,6 @@ body{
     return render_template_string(html)
 
 
-# =========================
-# home
-# =========================
 @app.route("/")
 def home():
     return "Bot Running"
