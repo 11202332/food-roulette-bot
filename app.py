@@ -23,13 +23,13 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 🍜 店家資料
+# 🍜 50家店資料
 # =========================
 places = [
 {"name":"栄次郎個人燒肉","rating":4.7,"price":"$200-400","type":"燒肉","comment":"自己烤肉很爽但錢包會痛"},
 {"name":"FlagPasta","rating":4.5,"price":"$200-400","type":"義大利麵","comment":"穩定不踩雷"},
 {"name":"小食。候","rating":4.3,"price":"$200-400","type":"咖啡","comment":"安靜但容易客滿"},
-{"name":"義匠義式湯麵","rating":4.8,"price":"$200-400","type":"義大利麵","comment":"濃郁湯麵很特別"},
+{"name":"義匠義式湯麵","rating":4.8,"price":"$200-400","type":"義大利麵","comment":"湯麵很特別"},
 {"name":"鄉親小吃","rating":4.6,"price":"$1-200","type":"小吃","comment":"便宜實在"},
 {"name":"台南無刺虱目魚","rating":4.4,"price":"$1-200","type":"小吃","comment":"清爽魚湯"},
 {"name":"逸麵鍋燒","rating":4.9,"price":"$1-200","type":"鍋燒","comment":"湯頭超強"},
@@ -76,13 +76,11 @@ places = [
 ]
 
 
-
 # =========================
-# LINE webhook（只留一個！！）
+# LINE webhook
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
-
     body = request.get_json()
 
     try:
@@ -120,7 +118,7 @@ def webhook():
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
-        # 🗺️ 地圖入口
+        # 🗺️ 地圖
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type":"template",
@@ -148,7 +146,7 @@ def webhook():
 
 
 # =========================
-# 🗺️ 手繪地圖（你要的簡化版）
+# 🗺️ 手繪風地圖（升級版）
 # =========================
 @app.route("/map")
 def map_page():
@@ -169,7 +167,7 @@ body{
 }
 
 #panel{
-    width:320px;
+    width:340px;
     background:#fafafa;
     padding:10px;
     overflow:auto;
@@ -186,28 +184,38 @@ body{
 #map{
     flex:1;
     position:relative;
-    background:#f2efe9;
+    background:#f6f1e7;
 }
 
-.center{
+/* 三條街區 */
+.zone{
     position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    background:#ff6b6b;
-    color:white;
-    padding:6px 12px;
-    border-radius:20px;
-    font-size:12px;
+    width:30%;
+    height:100%;
+    top:0;
+    opacity:0.3;
 }
 
+.zone1{left:0;background:#ffd6d6;}
+.zone2{left:33%;background:#d6e4ff;}
+.zone3{left:66%;background:#d6ffd9;}
+
+.zone-title{
+    position:absolute;
+    top:10px;
+    font-weight:bold;
+}
+
+/* 店點 */
 .dot{
     position:absolute;
-    width:10px;
-    height:10px;
-    background:#333;
+    width:12px;
+    height:12px;
     border-radius:50%;
+    background:#333;
+    border:2px solid white;
 }
+
 </style>
 </head>
 
@@ -230,16 +238,26 @@ body{
 </div>
 
 <div id="map">
-<div class="center">致理科大</div>
+
+<div class="zone zone1"><div class="zone-title">文化路</div></div>
+<div class="zone zone2"><div class="zone-title">陽明街</div></div>
+<div class="zone zone3"><div class="zone-title">新海路</div></div>
 """
 
-    # 隨機分散點（手繪感）
-    for p in places:
+    # 分區點位（比較有邏輯，不亂跳）
+    for i, p in enumerate(places):
+        zone = i % 3
+
         top = random.randint(10, 85)
-        left = random.randint(45, 90)
+        left_base = [10, 40, 70][zone]
+        left = left_base + random.randint(0, 15)
+
+        color = ["#ff6b6b","#4dabf7","#51cf66"][zone]
 
         html += f"""
-        <div class="dot" style="top:{top}%;left:{left}%;" title="{p['name']}"></div>
+        <div class="dot"
+             style="top:{top}%;left:{left}%;background:{color};"
+             title="{p['name']}"></div>
         """
 
     html += """
