@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, jsonify
 import requests
 import os
 import json
@@ -26,24 +26,21 @@ def reply(reply_token, messages):
 # 🍜 店家資料
 # =========================
 places = [
-    {"name":"栄次郎個人燒肉—板橋文化店","address":"文化路一段325號","rating":"4.7","price":"$200-400","time":"11:30-23:30","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
-    {"name":"FlagPasta","address":"陽明街23巷5號","rating":"4.5","price":"$200-400","time":"11:00-21:00","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
-    {"name":"小食。候","address":"陽明街23巷13號","rating":"4.3","price":"$200-400","time":"12:00-19:00","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
-    {"name":"義匠義式湯麵","address":"陽明街32號","rating":"4.8","price":"$200-400","time":"11:30-21:00","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
-    {"name":"鄉親小吃","address":"幸福路16號","rating":"4.6","price":"$1-200","time":"11:00-19:00","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
-    {"name":"台南無刺虱目魚","address":"新海路97號","rating":"4.4","price":"$1-200","time":"11:00-22:00","url":"https://maps.app.goo.gl/7b41uvR3Bimf2iGR8"},
-    {"name":"逸麵麵鍋燒","address":"新海路101號","rating":"4.9","price":"$1-200","time":"11:30-21:00","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
-    {"name":"is pasta","address":"文化路一段321號2樓","rating":"4.3","price":"$200-400","time":"11:20-21:15","url":"https://maps.app.goo.gl/u4S4BujsEwmQRdnV7"},
-    {"name":"吉飽早餐","address":"文化路一段311-19號","rating":"4.0","price":"$1-200","time":"7:00-14:00","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
-    {"name":"太極鰲車輪餅","address":"漢生西路128號","rating":"4.3","price":"$1-200","time":"11:00-20:00","url":"https://maps.app.goo.gl/xYUnsWEWp4qL1Mg48"},
-    {"name":"小松拉麵","address":"自由路33號","rating":"4.5","price":"$1-200","time":"11:30-21:30","url":"https://maps.app.goo.gl/LKop15YmYrWt8ccP8"},
-    {"name":"一京咖哩","address":"陽明街109號","rating":"4.6","price":"$1-200","time":"11:00-20:00","url":"https://maps.app.goo.gl/st1Ly3jhVZiNdhZJ8"},
-    {"name":"致理飯糰","address":"文化路一段311巷24號","rating":"4.7","price":"$1-200","time":"9:00-17:15","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
-    {"name":"吳二麻辣鴨血","address":"文化路一段311之6號","rating":"4.4","price":"$1-200","time":"10:30-20:30","url":"https://maps.app.goo.gl/wTVnP3P1BeXfMweHA"},
-    {"name":"吉野烤肉飯","address":"文化路一段311-15號","rating":"3.8","price":"$1-200","time":"10:30-20:00","url":"https://maps.app.goo.gl/4NuMrst9S6LaLsAAA"},
-    {"name":"MABO POKE","address":"文化路一段311之3號","rating":"4.3","price":"$1-200","time":"11:00-20:30","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9"},
-    {"name":"小陳滷社","address":"文化路一段311巷22號","rating":"3.9","price":"$1-200","time":"11:30-20:00","url":"https://maps.app.goo.gl/1hxJG1hFFHHWA8c69"},
-    {"name":"Café Wanderer","address":"陽明街27巷7號","rating":"4.4","price":"$200-400","time":"10:00-20:30","url":"https://maps.app.goo.gl/fY6ryS1ZkMVXLkyC9"},
+    {"name":"栄次郎個人燒肉","address":"文化路一段325號","rating":"4.7","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
+    {"name":"FlagPasta","address":"陽明街23巷5號","rating":"4.5","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
+    {"name":"小食。候","address":"陽明街23巷13號","rating":"4.3","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
+    {"name":"義匠義式湯麵","address":"陽明街32號","rating":"4.8","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
+    {"name":"鄉親小吃","address":"幸福路16號","rating":"4.6","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
+    {"name":"台南無刺虱目魚","address":"新海路97號","rating":"4.4","url":"https://maps.app.goo.gl/7b41uvR3Bimf2iGR8"},
+    {"name":"逸麵麵鍋燒","address":"新海路101號","rating":"4.9","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
+    {"name":"is pasta","address":"文化路321號2樓","rating":"4.3","url":"https://maps.app.goo.gl/u4S4BujsEwmQRdnV7"},
+    {"name":"吉飽早餐","address":"文化路311-19號","rating":"4.0","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
+    {"name":"太極鰲車輪餅","address":"漢生西路128號","rating":"4.3","url":"https://maps.app.goo.gl/xYUnsWEWp4qL1Mg48"},
+    {"name":"小松拉麵","address":"自由路33號","rating":"4.5","url":"https://maps.app.goo.gl/LKop15YmYrWt8ccP8"},
+    {"name":"一京咖哩","address":"陽明街109號","rating":"4.6","url":"https://maps.app.goo.gl/st1Ly3jhVZiNdhZJ8"},
+    {"name":"致理飯糰","address":"文化路311巷24號","rating":"4.7","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
+    {"name":"吳二麻辣鴨血","address":"文化路311之6號","rating":"4.4","url":"https://maps.app.goo.gl/wTVnP3P1BeXfMweHA"},
+    {"name":"吉野烤肉飯","address":"文化路311-15號","rating":"3.8","url":"https://maps.app.goo.gl/4NuMrst9S6LaLsAAA"},
 ]
 
 
@@ -59,48 +56,42 @@ def webhook():
         msg = event["message"]["text"]
         reply_token = event["replyToken"]
 
-        # 🎡 轉盤入口（會員判斷）
+        # 🎡 入口
         if msg == "美食轉盤":
             reply(reply_token, [{
                 "type":"template",
-                "altText":"會員選擇",
+                "altText":"轉盤",
                 "template":{
                     "type":"buttons",
-                    "text":"你是會員嗎？",
+                    "text":"是否進入會員轉盤？",
                     "actions":[
-                        {"type":"message","label":"我是會員","text":"抽餐廳"},
+                        {"type":"message","label":"我是會員","text":"進入轉盤"},
                         {"type":"uri","label":"我不是會員",
                          "uri":"https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"}
                     ]
                 }
             }])
 
-        # 🎡 真轉盤
-        elif msg == "抽餐廳":
-            p = random.choice(places)
-
+        # 🎡 進入轉盤頁
+        elif msg == "進入轉盤":
             reply(reply_token, [{
                 "type":"text",
-                "text": f"🎡 抽到：{p['name']}\n⭐ {p['rating']} | 💰 {p['price']}\n📍 {p['address']}"
+                "text":"🎡 轉盤準備完成"
             },
             {
                 "type":"text",
-                "text": p["url"]
+                "text":"https://food-roulette-bot.onrender.com/wheel"
             }])
 
         # 🗺️ 清單
         elif msg == "美食地圖":
             reply(reply_token, [{
-                "type":"template",
-                "altText":"美食地圖",
-                "template":{
-                    "type":"buttons",
-                    "text":"打開美食清單",
-                    "actions":[
-                        {"type":"uri","label":"進入地圖",
-                         "uri":"https://food-roulette-bot.onrender.com/map"}
-                    ]
-                }
+                "type":"text",
+                "text":"👇 打開美食清單"
+            },
+            {
+                "type":"text",
+                "text":"https://food-roulette-bot.onrender.com/map"
             }])
 
         else:
@@ -113,7 +104,113 @@ def webhook():
 
 
 # =========================
-# 🗺️ 地圖頁（不卡 + 好看）
+# 🎡 轉盤 UI（完整動畫版）
+# =========================
+@app.route("/wheel")
+def wheel():
+    names = [p["name"] for p in places]
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>美食轉盤</title>
+
+<style>
+body {{
+    margin:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    background:#fff3e6;
+    font-family:Arial;
+}}
+
+#wheel {{
+    width:420px;
+    height:420px;
+    border-radius:50%;
+    border:10px solid #ff4d4d;
+    position:relative;
+    transition: transform 4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow:hidden;
+}}
+
+.center {{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-weight:bold;
+}}
+
+#btn {{
+    margin-top:20px;
+    padding:10px 16px;
+    background:#ff4d4d;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}}
+</style>
+</head>
+
+<body>
+
+<div style="text-align:center;">
+    <div id="wheel">
+        <div class="center">🎡</div>
+    </div>
+
+    <button id="btn">開始轉盤</button>
+</div>
+
+<script>
+let names = {names};
+let wheel = document.getElementById("wheel");
+
+let angle = 360 / names.length;
+
+document.getElementById("btn").onclick = async function() {{
+
+    let index = Math.floor(Math.random() * names.length);
+    let deg = 3600 + (index * angle);
+
+    wheel.style.transform = "rotate(" + deg + "deg)";
+
+    setTimeout(async () => {{
+        let res = await fetch("/spin?i=" + index);
+        let data = await res.json();
+
+        alert(
+            "🎉 抽到：" + data.name +
+            "\\n📍 " + data.address +
+            "\\n⭐ " + data.rating
+        );
+    }}, 4200);
+}};
+</script>
+
+</body>
+</html>
+"""
+    return render_template_string(html)
+
+
+# =========================
+# 🎯 抽結果 API
+# =========================
+@app.route("/spin")
+def spin():
+    i = int(request.args.get("i"))
+    return jsonify(places[i])
+
+
+# =========================
+# 🗺️ 清單頁
 # =========================
 @app.route("/map")
 def map_page():
@@ -145,11 +242,6 @@ body{
     box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
-.name{
-    font-size:18px;
-    font-weight:bold;
-}
-
 a{
     display:inline-block;
     margin-top:8px;
@@ -164,15 +256,14 @@ a{
 
 <body>
 <div class="container">
-<h2>🍜 致理美食清單</h2>
+<h2>🍜 美食清單</h2>
 """
 
     for p in places:
         html += f"""
         <div class="card">
-            <div class="name">{p['name']}</div>
-            ⭐ {p['rating']} | 💰 {p['price']}<br>
-            🕒 {p['time']}<br>
+            <b>{p['name']}</b><br>
+            ⭐ {p['rating']}<br>
             📍 {p['address']}<br>
             <a href="{p['url']}" target="_blank">開啟 Google Maps</a>
         </div>
