@@ -23,9 +23,8 @@ def reply(reply_token, messages):
 
 
 # =========================
-# 🍜 50家店（簡化資料）
+# 🍜 店家資料
 # =========================
-
 places = [
 {"name":"栄次郎個人燒肉","rating":4.7,"price":"$200-400","type":"燒肉","comment":"自己烤肉很爽但錢包會痛"},
 {"name":"FlagPasta","rating":4.5,"price":"$200-400","type":"義大利麵","comment":"穩定不踩雷"},
@@ -79,9 +78,8 @@ places = [
 
 
 # =========================
-# webhook（LINE）
+# LINE webhook（只留一個！！）
 # =========================
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
@@ -122,7 +120,7 @@ def webhook():
                 {"type":"text","text":"https://forms.gle/jYykimjWcX1rgYRW8"}
             ])
 
-        # 🗺️ 地圖
+        # 🗺️ 地圖入口
         elif msg == "美食地圖":
             reply(reply_token, [{
                 "type":"template",
@@ -150,9 +148,8 @@ def webhook():
 
 
 # =========================
-# 🌍 手繪地圖（簡化版）
+# 🗺️ 手繪地圖（你要的簡化版）
 # =========================
-
 @app.route("/map")
 def map_page():
 
@@ -211,12 +208,6 @@ body{
     background:#333;
     border-radius:50%;
 }
-
-.zone{
-    position:absolute;
-    font-size:12px;
-    color:#666;
-}
 </style>
 </head>
 
@@ -231,7 +222,7 @@ body{
         <div class="card">
             <b>{p['name']}</b><br>
             ⭐ {p['rating']} | {p['price']}<br>
-            {p['desc']}
+            {p['comment']}
         </div>
         """
 
@@ -239,15 +230,10 @@ body{
 </div>
 
 <div id="map">
-
 <div class="center">致理科大</div>
-
-<div class="zone" style="top:10%;left:60%;">文化路</div>
-<div class="zone" style="top:40%;left:65%;">陽明街</div>
-<div class="zone" style="top:70%;left:55%;">新海路</div>
 """
 
-    # 隨機分散點
+    # 隨機分散點（手繪感）
     for p in places:
         top = random.randint(10, 85)
         left = random.randint(45, 90)
@@ -269,7 +255,6 @@ body{
 # =========================
 # home
 # =========================
-
 @app.route("/")
 def home():
     return "Bot Running"
