@@ -1,280 +1,223 @@
-from flask import Flask, request, render_template_string
-import requests
-import os
-import json
+from flask import Flask, render_template_string, redirect
 
 app = Flask(__name__)
 
-LINE_TOKEN = os.environ.get("LINE_TOKEN")
-LINE_API = "https://api.line.me/v2/bot/message/reply"
+FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
 
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {LINE_TOKEN}" if LINE_TOKEN else ""
+DATA = {
+    "文化路一段": [
+        {"name":"栄次郎個人燒肉—板橋文化店","addr":"文化路一段325號","rating":"4.7","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
+        {"name":"is pasta 義大利麵","addr":"文化路一段321號","rating":"4.3","url":"https://maps.app.goo.gl/u4S4BujsEwmQRdnV7"},
+        {"name":"吉飽早餐-致理店","addr":"文化路一段311-19號","rating":"4.0","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
+        {"name":"致理飯糰","addr":"文化路一段311巷24號","rating":"4.7","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
+        {"name":"吳二麻辣鴨血","addr":"文化路一段311-6號","rating":"4.4","url":"https://maps.app.goo.gl/wTVnP3P1BeXfMweHA"},
+        {"name":"吉野烤肉飯","addr":"文化路一段311-15號","rating":"3.8","url":"https://maps.app.goo.gl/4NuMrst9S6LaLsAAA"},
+        {"name":"MABO POKE","addr":"文化路一段311-3號","rating":"4.3","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9"},
+        {"name":"小陳滷社","addr":"文化路一段311巷22號","rating":"3.9","url":"https://maps.app.goo.gl/1hxJG1hFFHHWA8c69"},
+        {"name":"8弄5焗烤","addr":"文化路一段311-5號","rating":"3.6","url":"https://maps.app.goo.gl/yqBECv3p6rzyzA2JA"},
+        {"name":"芳鄰美而美","addr":"文化路一段311-13號","rating":"4.0","url":"https://maps.app.goo.gl/nSKzHtvDUMurWkdz9"},
+        {"name":"健康主義","addr":"文化路一段311-18號","rating":"4.2","url":"https://maps.app.goo.gl/wiaty6nqfMybNpMT9"},
+        {"name":"龍一海南雞","addr":"文化路一段311-8號","rating":"4.6","url":"https://maps.app.goo.gl/H7s3eem2CT8p4JNJ8"},
+        {"name":"晨間廚房","addr":"文化路一段311-24號","rating":"3.1","url":"https://maps.app.goo.gl/o5Xa4dFAdgjGYqM28"},
+        {"name":"食尚川府","addr":"文化路一段311-21號","rating":"4.8","url":"https://maps.app.goo.gl/rhr1HHaZAV6XBR1z7"},
+        {"name":"霸子牛排","addr":"文化路一段345號","rating":"4.0","url":"https://maps.app.goo.gl/4oLSG7m4w25Ehstm7"},
+        {"name":"燒惑日式燒肉","addr":"文化路一段323號","rating":"4.4","url":"https://maps.app.goo.gl/aCYeMUYW4VZUrj7G7"},
+    ],
+
+    "陽明街": [
+        {"name":"FlagPasta","addr":"陽明街23巷5號","rating":"4.5","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
+        {"name":"小食。候","addr":"陽明街23巷13號","rating":"4.3","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
+        {"name":"義匠義式湯麵","addr":"陽明街32號","rating":"4.8","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
+        {"name":"小松拉麵","addr":"自由路33號","rating":"4.5","url":"https://maps.app.goo.gl/LKop15YmYrWt8ccP8"},
+        {"name":"一京咖哩","addr":"陽明街109號","rating":"4.6","url":"https://maps.app.goo.gl/st1Ly3jhVZiNdhZJ8"},
+        {"name":"Café Wanderer","addr":"陽明街27巷7號","rating":"4.4","url":"https://maps.app.goo.gl/fY6ryS1ZkMVXLkyC9"},
+        {"name":"光東养茶","addr":"陽明街131號","rating":"4.7","url":"https://maps.app.goo.gl/beXqvzWQBnMnArr66"},
+        {"name":"德堡牛排","addr":"陽明街17-1號","rating":"4.0","url":"https://maps.app.goo.gl/joCCpusVhvJPYkRWA"},
+    ],
+
+    "幸福路 / 新海路": [
+        {"name":"鄉親小吃","addr":"幸福路16號","rating":"4.6","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
+        {"name":"好食堂","addr":"幸福路18號","rating":"4.2","url":"https://maps.app.goo.gl/ZQF4CXHdrNP1iHjo7"},
+        {"name":"台南無刺虱目魚","addr":"新海路97號","rating":"4.4","url":"https://maps.app.goo.gl/7b41uvR3Bimf2iGR8"},
+        {"name":"逸麵麵鍋燒","addr":"新海路101號","rating":"4.9","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
+        {"name":"牪嗑牛排","addr":"新海路63號","rating":"4.3","url":"https://maps.app.goo.gl/p9bi26hNbEpsNeS39"},
+        {"name":"韓鼓韓式料理","addr":"新海路11號","rating":"4.3","url":"https://maps.app.goo.gl/UmPfLfW57evBk1Yr8"},
+        {"name":"山東寶麵食館","addr":"幸福路17號","rating":"4.4","url":"https://maps.app.goo.gl/ZKpyH4qKqAuFoKpy6"},
+    ]
 }
 
 
-def reply(reply_token, messages):
-    if not LINE_TOKEN:
-        print("LINE_TOKEN missing")
-        return
+HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>校園美食地圖（優化版）</title>
 
-    try:
-        requests.post(
-            LINE_API,
-            headers=headers,
-            data=json.dumps({"replyToken": reply_token, "messages": messages}),
-            timeout=5
-        )
-    except Exception as e:
-        print("reply error:", e)
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#faf7f2;
+}
 
+/* 上方功能列 */
+.topbar{
+    background:#222;
+    color:white;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 
-# =========================
-# 🗺️ 完整店家資料（含分區 + 連結）
-# =========================
-places = [
-    {"name":"栄次郎燒肉","area":"文化","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
-    {"name":"FlagPasta","area":"陽明","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
-    {"name":"小食。候","area":"陽明","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
-    {"name":"義匠湯麵","area":"陽明","url":"https://maps.app.goo.gl/hvycV2nGZ7WKgS5e7"},
-    {"name":"鄉親小吃","area":"幸福","url":"https://maps.app.goo.gl/cT7PFmLaPrnm2kYc8"},
-    {"name":"逸麵鍋燒","area":"新海","url":"https://maps.app.goo.gl/HxLnPaa2ZBqbMGRs8"},
-    {"name":"is pasta","area":"文化","url":"https://maps.app.goo.gl/u4S4BujsEwmQRdnV7"},
-    {"name":"吉飽早餐","area":"文化","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5"},
-    {"name":"致理飯糰","area":"文化","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5"},
-    {"name":"小松拉麵","area":"陽明","url":"https://maps.app.goo.gl/LKop15YmYrWt8ccP8"}
-]
+button{
+    padding:10px 15px;
+    border:none;
+    cursor:pointer;
+    border-radius:8px;
+}
 
+.roulette-btn{
+    background:#ffcc00;
+    font-weight:bold;
+}
 
-# =========================
-# LINE webhook
-# =========================
-@app.route("/webhook", methods=["POST"])
-def webhook():
+/* 左右排版 */
+.container{
+    display:flex;
+    height:calc(100vh - 60px);
+}
 
-    try:
-        body = request.get_json()
-        if not body or "events" not in body:
-            return "OK"
+/* 左側分類 */
+.left{
+    width:35%;
+    overflow:auto;
+    padding:10px;
+    border-right:2px solid #ddd;
+}
 
-        event = body["events"][0]
-        if "message" not in event:
-            return "OK"
+/* 右側店家 */
+.right{
+    width:65%;
+    overflow:auto;
+    padding:10px;
+}
 
-        msg = event["message"].get("text", "")
-        reply_token = event.get("replyToken")
+/* 分區 */
+.zone{
+    margin-bottom:20px;
+    background:white;
+    padding:10px;
+    border-radius:10px;
+}
 
-        if not reply_token:
-            return "OK"
+.zone h3{
+    margin:5px 0;
+    color:#333;
+}
 
-        # 🎡 轉盤（會員）
-        if msg == "美食轉盤":
-            reply(reply_token, [{
-                "type": "template",
-                "altText": "會員功能",
-                "template": {
-                    "type": "buttons",
-                    "title": "會員功能",
-                    "text": "此為會員功能",
-                    "actions": [
-                        {
-                            "type": "uri",
-                            "label": "我是會員",
-                            "uri": "https://food-roulette-bot.onrender.com/roulette"
-                        },
-                        {
-                            "type": "uri",
-                            "label": "我不是會員",
-                            "uri": "https://docs.google.com/forms/d/e/1FAIpQLSeNgsm2AKG5z_zM4bz-lcWmyUhbWGio8EpHqCqMcfz_2kdo2A/viewform?usp=header"
-                        }
-                    ]
-                }
-            }])
+/* 店卡 */
+.card{
+    padding:8px;
+    border-bottom:1px solid #eee;
+}
 
-        # 🗺️ 地圖
-        elif msg == "美食地圖":
-            reply(reply_token, [{
-                "type": "uri",
-                "altText": "美食地圖",
-                "uri": "https://food-roulette-bot.onrender.com/map"
-            }])
+.card a{
+    color:blue;
+    text-decoration:none;
+}
 
-        else:
-            reply(reply_token, [{"type":"text","text":"收到：" + msg}])
+/* modal */
+.modal{
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+}
 
-        return "OK"
+.modal-box{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+}
+</style>
+</head>
 
-    except Exception as e:
-        print("webhook error:", e)
-        return "OK"
+<body>
 
+<div class="topbar">
+    <div>🍜 校園美食地圖</div>
+    <button class="roulette-btn" onclick="openModal()">會員功能轉盤</button>
+</div>
 
-# =========================
-# 🎡 轉盤頁
-# =========================
-@app.route("/roulette")
-def roulette():
-
-    names = [p["name"] for p in places]
-
-    html = """
-    <html>
-    <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>轉盤</title>
-    <style>
-    body{font-family:Arial;text-align:center;background:#fff3e6;}
-    .box{margin-top:60px;}
-    button{
-        padding:15px 25px;
-        font-size:18px;
-        border:none;
-        border-radius:10px;
-        background:#ff6b6b;
-        color:white;
-    }
-    </style>
-    </head>
-
-    <body>
-
-    <div class="box">
-        <h2>🎡 美食轉盤</h2>
-        <p id="result">點擊開始</p>
-        <button onclick="spin()">開始</button>
-    </div>
-
-    <script>
-    const places = %s;
-
-    function spin(){
-        const pick = places[Math.floor(Math.random()*places.length)];
-        document.getElementById("result").innerText = "👉 " + pick;
-    }
-    </script>
-
-    </body>
-    </html>
-    """ % json.dumps(names, ensure_ascii=False)
-
-    return render_template_string(html)
-
-
-# =========================
-# 🗺️ 完整地圖（左右版 + 分區）
-# =========================
-@app.route("/map")
-def map_page():
-
-    html = """
-    <html>
-    <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>美食地圖</title>
-
-    <style>
-    body{margin:0;font-family:Arial;background:#f7f3ea;}
-    .wrap{display:flex;height:100vh;}
-
-    .left{
-        width:340px;
-        overflow:auto;
-        background:#fff8ee;
-        padding:10px;
-    }
-
-    .card{
-        background:white;
-        margin:8px 0;
-        padding:10px;
-        border-radius:10px;
-    }
-
-    .right{
-        flex:1;
-        display:flex;
-        flex-wrap:wrap;
-        padding:10px;
-        background:#f1eadf;
-    }
-
-    .area{
-        width:45%;
-        margin:10px;
-        background:white;
-        padding:10px;
-        border-radius:12px;
-    }
-
-    @media(max-width:768px){
-        .wrap{flex-direction:column;}
-        .left{width:100%;height:40vh;}
-        .right{height:60vh;}
-    }
-    </style>
-
-    </head>
-
-    <body>
-
-    <div class="wrap">
+<div class="container">
 
     <div class="left">
-    <h3>🍜 店家清單</h3>
-    """
-
-    for p in places:
-        html += f"""
-        <div class="card">
-            <b>{p['name']}</b><br>
-            🧭 {p['area']}<br>
-            📍 <a href="{p['url']}" target="_blank">Google Maps</a>
+        {% for zone, items in data.items() %}
+        <div class="zone">
+            <h3>{{ zone }}</h3>
+            {% for i in items %}
+                <div class="card">{{ i.name }}</div>
+            {% endfor %}
         </div>
-        """
-
-    html += """
+        {% endfor %}
     </div>
 
     <div class="right">
-
-    <div class="area">
-    <h4>文化路</h4>
-    栄次郎燒肉<br>is pasta<br>吉飽早餐<br>致理飯糰
+        {% for zone, items in data.items() %}
+        <div class="zone">
+            <h3>{{ zone }}</h3>
+            {% for i in items %}
+                <div class="card">
+                    <b>{{ i.name }}</b><br>
+                    📍 {{ i.addr }}<br>
+                    ⭐ {{ i.rating }}<br>
+                    <a href="{{ i.url }}" target="_blank">Google Map</a>
+                </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
     </div>
 
-    <div class="area">
-    <h4>陽明街</h4>
-    FlagPasta<br>小食。候<br>義匠湯麵<br>小松拉麵
-    </div>
+</div>
 
-    <div class="area">
-    <h4>幸福路</h4>
-    鄉親小吃
-    </div>
+<!-- modal -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>是否為會員？</h3>
+    <button onclick="yesMember()">是會員</button>
+    <button onclick="noMember()">不是會員</button>
+  </div>
+</div>
 
-    <div class="area">
-    <h4>新海路</h4>
-    逸麵鍋燒
-    </div>
+<script>
+function openModal(){
+    document.getElementById("modal").style.display="flex";
+}
 
-    </div>
+function yesMember(){
+    alert("🎡 開啟轉盤（這裡可接你的轉盤功能）");
+    document.getElementById("modal").style.display="none";
+}
 
-    </div>
+function noMember(){
+    window.location.href = "{{ form_url }}";
+}
+</script>
 
-    </body>
-    </html>
-    """
-
-    return render_template_string(html)
+</body>
+</html>
+"""
 
 
 @app.route("/")
 def home():
-    return "Bot Running"
+    return render_template_string(HTML, data=DATA, form_url=FORM_URL)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    app.run(host="0.0.0.0", port=10000, debug=True)
