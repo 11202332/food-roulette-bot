@@ -24,7 +24,7 @@ def reply(reply_token, messages):
 # =========================
 # 🍜 店家資料（完整含 Google Maps）
 # =========================
-restaurants = [
+places = [
     {"name":"栄次郎個人燒肉—板橋文化店","address":"220新北市板橋區忠誠里文化路一段325號","rating":"4.7","price":"$200-400","time":"11:30-23:30","url":"https://maps.app.goo.gl/gTedZVhUR4hhw6nz6"},
     {"name":"FlagPasta","address":"220新北市板橋區忠誠里陽明街23巷5號","rating":"4.5","price":"$200-400","time":"11:00-21:00","url":"https://maps.app.goo.gl/yWXhhGi8tcrXd8t88"},
     {"name":"小食。候","address":"220新北市板橋區忠誠里陽明街23巷13號1樓","rating":"4.3","price":"$200-400","time":"12:00-19:00","url":"https://maps.app.goo.gl/WJacSW1iWu1LFiC66"},
