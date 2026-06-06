@@ -36,12 +36,12 @@ places = [
     {"name":"吉飽早餐","address":"文化路","rating":"4.0","price":"$1-200","time":"7:00-14:00","url":"https://maps.app.goo.gl/ppZecPKRoRzW6VPq5","comment":"早八救命店"},
     {"name":"太極鰲車輪餅","address":"漢生西路","rating":"4.3","price":"$1-200","time":"11:00-20:00","url":"https://maps.app.goo.gl/xYUnsWEWp4qL1Mg48","comment":"下午茶首選"},
 
-    # 🔥 新增補強（讓清單變多）
     {"name":"小松拉麵","address":"自由路","rating":"4.5","price":"$1-200","time":"11:30-21:30","url":"https://maps.app.goo.gl/LKop15YmYrWt8ccP8","comment":"便宜又能吃飽"},
     {"name":"一京咖哩","address":"陽明街","rating":"4.6","price":"$1-200","time":"11:00-20:00","url":"https://maps.app.goo.gl/st1Ly3jhVZiNdhZJ8","comment":"咖哩很穩"},
     {"name":"致理飯糰","address":"文化路","rating":"4.7","price":"$1-200","time":"9:00-17:15","url":"https://maps.app.goo.gl/XBzzQkp1VuyB3fsr5","comment":"學生早餐神器"},
     {"name":"吳二麻辣鴨血","address":"文化路","rating":"4.4","price":"$1-200","time":"10:30-20:30","url":"https://maps.app.goo.gl/wTVnP3P1BeXfMweHA","comment":"辣度很夠很爽"},
     {"name":"吉野烤肉飯","address":"文化路","rating":"3.8","price":"$1-200","time":"10:30-20:00","url":"https://maps.app.goo.gl/4NuMrst9S6LaLsAAA","comment":"便宜但普通"},
+
     {"name":"MABO POKE","address":"文化路","rating":"4.3","price":"$1-200","time":"11:00-20:30","url":"https://maps.app.goo.gl/z279YD9vMyneE4Ma9","comment":"健康輕食"},
     {"name":"Café Wanderer","address":"陽明街","rating":"4.4","price":"$200-400","time":"10:00-20:30","url":"https://maps.app.goo.gl/fY6ryS1ZkMVXLkyC9","comment":"咖啡店很 chill"},
     {"name":"紅居館","address":"漢生西路","rating":"4.8","price":"$400-800","time":"17:00-23:30","url":"https://maps.app.goo.gl/pM2ksGeQ3Dw59zup6","comment":"聚餐很有面子"},
@@ -54,7 +54,7 @@ places = [
 
 
 # =========================
-# LINE webhook（轉盤維持你原本）
+# LINE webhook（只修轉盤）
 # =========================
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -79,6 +79,32 @@ def webhook():
                 }
             }])
 
+        # =========================
+        # 🎡 修復：美食轉盤（你缺的就在這）
+        # =========================
+        elif msg == "美食轉盤":
+
+            reply(reply_token, [{
+                "type": "template",
+                "altText": "會員驗證",
+                "template": {
+                    "type": "buttons",
+                    "text": "請問你是否為會員？",
+                    "actions": [
+                        {
+                            "type": "message",
+                            "label": "我是會員",
+                            "text": "我是會員"
+                        },
+                        {
+                            "type": "message",
+                            "label": "我不是會員",
+                            "text": "我不是會員"
+                        }
+                    ]
+                }
+            }])
+
         elif msg == "我是會員":
             reply(reply_token, [
                 {"type":"text","text":"🎡 轉盤開啟"},
@@ -98,7 +124,7 @@ def webhook():
 
 
 # =========================
-# 🗺️ 地圖 UI（字放大 + 清單放大 + 置中）
+# 🗺️ 地圖 UI（不動）
 # =========================
 @app.route("/map")
 def map_page():
@@ -119,7 +145,6 @@ body{
     background:linear-gradient(90deg,#ffe6d1,#fff,#ffe6d1);
 }
 
-/* 主面板放大 */
 #panel{
     width:650px;
     padding:25px;
@@ -129,13 +154,11 @@ body{
     box-shadow:0 0 25px rgba(0,0,0,0.15);
 }
 
-/* 標題放大 */
 h2{
     text-align:center;
     font-size:26px;
 }
 
-/* 卡片變大 + 字變大 */
 .card{
     background:#fff7ef;
     margin:14px 0;
@@ -149,7 +172,6 @@ h2{
     font-weight:bold;
 }
 
-/* Google button */
 a{
     display:inline-block;
     margin-top:10px;
@@ -176,7 +198,6 @@ a{
             ⭐ {p['rating']} | {p['price']}<br>
             📝 {p['comment']}<br>
             📍 {p['address']}<br>
-
             <a href="{p['url']}" target="_blank">Google Maps</a>
         </div>
         """
